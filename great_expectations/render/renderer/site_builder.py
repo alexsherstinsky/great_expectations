@@ -8,8 +8,10 @@ from great_expectations.data_context.store.html_site_store import (
     HtmlSiteStore,
     SiteSectionIdentifier,
 )
-from great_expectations.data_context.types.resource_identifiers import ExpectationSuiteIdentifier, \
+from great_expectations.data_context.types.resource_identifiers import (
+    ExpectationSuiteIdentifier,
     ValidationResultIdentifier
+)
 
 from great_expectations.data_context.util import instantiate_class_from_config
 import great_expectations.exceptions as exceptions

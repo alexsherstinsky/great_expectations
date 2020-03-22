@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
-from great_expectations import DataContext
+#from great_expectations import DataContext
+#from great_expectations.data_context.data_context import (
+#    BaseDataContext,
+#    DataContext,
+#    ExplorerDataContext,
+#)
+from data_context_cli import (
+    BaseDataContext,
+    DataContext,
+    ExplorerDataContext,
+)
 
 GREETING = """<cyan>\
   ___              _     ___                  _        _   _             

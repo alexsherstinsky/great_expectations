@@ -6,15 +6,23 @@ import decimal
 import sys
 import datetime
 
-from six import string_types, integer_types
+from six import (
+    string_types,
+    integer_types
+)
 
 import pandas as pd
 import numpy as np
 
 from functools import wraps
 
-from great_expectations.core import ExpectationConfiguration, ExpectationSuite, ExpectationValidationResult, \
-    ExpectationKwargs, ExpectationSuiteValidationResult
+from great_expectations.core import (
+    ExpectationConfiguration,
+    ExpectationSuite,
+    ExpectationValidationResult,
+    ExpectationKwargs,
+    ExpectationSuiteValidationResult,
+)
 
 
 def parse_result_format(result_format):

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+
 import copy
+import importlib
+import six
 import datetime
 import errno
 import glob
@@ -13,15 +16,8 @@ import webbrowser
 from marshmallow import ValidationError
 from ruamel.yaml import YAML, YAMLError
 from six import string_types
+import inspect
 
-from great_expectations.core import ExpectationSuite, get_metric_kwargs_id
-from great_expectations.core.id_dict import BatchKwargs
-from great_expectations.core.metric import ValidationMetricIdentifier
-from great_expectations.core.util import nested_update
-from great_expectations.data_context.types.base import (
-    DataContextConfig,
-    dataContextConfigSchema,
-)
 from great_expectations.common import (
     substitute_none_for_missing,
     instantiate_class_from_config,
@@ -33,6 +29,16 @@ from great_expectations.common import (
     substitute_all_config_variables,
     file_relative_path,
 )
+from great_expectations.core import ExpectationSuite, get_metric_kwargs_id
+from great_expectations.core.id_dict import BatchKwargs
+from great_expectations.core.metric import ValidationMetricIdentifier
+from great_expectations.core.util import nested_update
+from great_expectations.data_context.types.base import (
+    DataContextConfig,
+    dataContextConfigSchema,
+)
+
+#
 from great_expectations.dataset import Dataset
 from great_expectations.profile.basic_dataset_profiler import (
     BasicDatasetProfiler,
@@ -41,7 +47,12 @@ from great_expectations.profile.basic_dataset_profiler import (
 import great_expectations.exceptions as ge_exceptions
 
 from ..validator.validator import Validator
-from .templates import (
+#from .templates import (
+#    CONFIG_VARIABLES_INTRO,
+#    CONFIG_VARIABLES_TEMPLATE,
+#    PROJECT_TEMPLATE,
+#)
+from great_expectations.data_context.templates import (
     CONFIG_VARIABLES_INTRO,
     CONFIG_VARIABLES_TEMPLATE,
     PROJECT_TEMPLATE,
@@ -50,7 +61,7 @@ from .templates import (
 #    ExpectationSuiteIdentifier,
 #    ValidationResultIdentifier,
 #)
-from great_expectations.common import (
+from great_expectations.data_context.types.resource_identifiers import (
     ExpectationSuiteIdentifier,
     ValidationResultIdentifier,
 )

@@ -1,6 +1,8 @@
 import datetime
 import logging
 
+import traceback
+
 from ..data_context.types.resource_identifiers import BatchIdentifier, ExpectationSuiteIdentifier, \
     ValidationResultIdentifier
 
@@ -174,7 +176,11 @@ class ActionListValidationOperator(ValidationOperator):
                 batch_actions_results[action["name"]] = {} if action_result is None else action_result
             except Exception as e:
                 logger.exception("Error running action with name {}".format(action["name"]))
-                raise e
+                exception_traceback = traceback.format_exc()
+                exception_message = "[ERROR] {}: {}".format(type(e).__name__, str(e)) + "ACTION_NAME: '{}'".format(action["name"]) + " [TRACEBACK] " + exception_traceback + " [ADDITIONAL INFORMATION] " + "Error running action with name {}".format(action["name"])
+                raise Exception(exception_message)
+
+                #raise e
 
         return batch_actions_results
 

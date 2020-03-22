@@ -2,7 +2,12 @@ import sys
 
 import click
 
-from great_expectations import DataContext
+#from great_expectations import DataContext
+from great_expectations.data_context.data_context import (
+    BaseDataContext,
+    DataContext,
+    ExplorerDataContext,
+)
 from great_expectations import exceptions as ge_exceptions
 from great_expectations.cli.util import (
     _offer_to_install_new_template,
