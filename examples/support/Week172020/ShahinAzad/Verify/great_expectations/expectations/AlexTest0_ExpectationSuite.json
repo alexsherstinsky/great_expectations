@@ -1,0 +1,287 @@
+{
+  "data_asset_type": "Dataset",
+  "expectation_suite_name": "AlexTest0_ExpectationSuite",
+  "expectations": [
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "max_value": 1444,
+        "min_value": 1181
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_table_column_count_to_equal",
+      "kwargs": {
+        "value": 7
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "Unnamed: 0",
+          "Name",
+          "PClass",
+          "Age",
+          "Sex",
+          "Survived",
+          "SexCode"
+        ]
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "PClass"
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_distinct_values_to_be_in_set",
+      "kwargs": {
+        "column": "PClass",
+        "value_set": [
+          "*",
+          "1st",
+          "2nd",
+          "3rd"
+        ]
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_kl_divergence_to_be_less_than",
+      "kwargs": {
+        "column": "PClass",
+        "partition_object": {
+          "values": [
+            "*",
+            "1st",
+            "2nd",
+            "3rd"
+          ],
+          "weights": [
+            0.0007616146230007616,
+            0.24523990860624523,
+            0.2124904798172125,
+            0.5415079969535415
+          ]
+        },
+        "threshold": 0.6
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "Unnamed: 0"
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_min_to_be_between",
+      "kwargs": {
+        "column": "Unnamed: 0",
+        "max_value": 2,
+        "min_value": 0
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_max_to_be_between",
+      "kwargs": {
+        "column": "Unnamed: 0",
+        "max_value": 1314,
+        "min_value": 1312
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_mean_to_be_between",
+      "kwargs": {
+        "column": "Unnamed: 0",
+        "max_value": 658.0,
+        "min_value": 656.0
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_median_to_be_between",
+      "kwargs": {
+        "column": "Unnamed: 0",
+        "max_value": 658.0,
+        "min_value": 656.0
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_quantile_values_to_be_between",
+      "kwargs": {
+        "column": "Unnamed: 0",
+        "quantile_ranges": {
+          "quantiles": [
+            0.05,
+            0.25,
+            0.5,
+            0.75,
+            0.95
+          ],
+          "value_ranges": [
+            [
+              66,
+              68
+            ],
+            [
+              328,
+              330
+            ],
+            [
+              656,
+              658
+            ],
+            [
+              984,
+              986
+            ],
+            [
+              1246,
+              1248
+            ]
+          ]
+        }
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "Name"
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "Name",
+        "min_value": 1
+      },
+      "meta": {
+        "BasicSuiteBuilderProfiler": {
+          "confidence": "very low"
+        }
+      }
+    }
+  ],
+  "meta": {
+    "BasicSuiteBuilderProfiler": {
+      "batch_kwargs": {
+        "datasource": "pandas_datasource",
+        "path": "/Users/alexsherstinsky/Downloads/ShahinAzad/Titanic.csv",
+        "reader_method": "read_csv"
+      },
+      "created_at": 1587277717.1227462,
+      "created_by": "BasicSuiteBuilderProfiler"
+    },
+    "citations": [
+      {
+        "batch_kwargs": {
+          "datasource": "pandas_datasource",
+          "path": "/Users/alexsherstinsky/Downloads/ShahinAzad/Titanic.csv",
+          "reader_method": "read_csv"
+        },
+        "batch_markers": {
+          "ge_load_time": "20200419T062837.037473Z",
+          "pandas_data_fingerprint": "3aaabc12402f987ff006429a7756f5cf"
+        },
+        "batch_parameters": null,
+        "citation_date": "2020-04-18T23:28:37.151948",
+        "comment": "BasicSuiteBuilderProfiler added a citation based on the current batch."
+      }
+    ],
+    "columns": {
+      "Age": {
+        "description": ""
+      },
+      "Name": {
+        "description": ""
+      },
+      "PClass": {
+        "description": ""
+      },
+      "Sex": {
+        "description": ""
+      },
+      "SexCode": {
+        "description": ""
+      },
+      "Survived": {
+        "description": ""
+      },
+      "Unnamed: 0": {
+        "description": ""
+      }
+    },
+    "great_expectations.__version__": "0.10.1",
+    "notes": {
+      "content": [
+        "#### This is an _example_ suite\n\n- This suite was made by quickly glancing at 1000 rows of your data.\n- This is **not a production suite**. It is meant to show examples of expectations.\n- Because this suite was auto-generated using a very basic profiler that does not know your data like you do, many of the expectations may not be meaningful.\n"
+      ],
+      "format": "markdown"
+    }
+  }
+}
