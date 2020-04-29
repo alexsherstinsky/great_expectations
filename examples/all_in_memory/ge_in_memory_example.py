@@ -72,8 +72,8 @@ context.save_expectation_suite(expectation_suite_obj, expectation_suite_name)
 
 # Obtain a DataFrame at a relevant point in your data pipeline.
 import pandas as pd
-d = {'col1': [1, 2], 'col2': [3, 4]}
-df = pd.DataFrame(data=d)
+data = {'col1': [1, 2], 'col2': [3, 4]}
+df = pd.DataFrame(data=data)
 print(df)
 
 
