@@ -1,11 +1,7 @@
-# PYTHON 2 - py2 - update to ABC direct use rather than __metaclass__ once we drop py2 support
 from abc import ABCMeta, abstractmethod
 
-from six import string_types
 
-
-class StoreBackend(object):
-    __metaclass__ = ABCMeta
+class StoreBackend(object, metaclass=ABCMeta):
     """A store backend acts as a key-value store that can accept tuples as keys, to abstract away
     reading and writing to a persistence layer.
 
@@ -47,11 +43,11 @@ class StoreBackend(object):
     def _validate_key(self, key):
         if isinstance(key, tuple):
             for key_element in key:
-                if not isinstance(key_element, string_types):
+                if not isinstance(key_element, str):
                     raise TypeError(
                         "Elements within tuples passed as keys to {0} must be instances of {1}, not {2}".format(
                             self.__class__.__name__,
-                            string_types,
+                            str,
                             type(key_element),
                         ))
         else:
@@ -74,6 +70,10 @@ class StoreBackend(object):
 
     @abstractmethod
     def list_keys(self, prefix=()):
+        raise NotImplementedError
+
+    @abstractmethod
+    def remove_key(self, key):
         raise NotImplementedError
 
     def _has_key(self, key):
@@ -107,3 +107,6 @@ class InMemoryStoreBackend(StoreBackend):
 
     def _has_key(self, key):
         return key in self._store
+
+    def remove_key(self, key):
+        del self._store[key]

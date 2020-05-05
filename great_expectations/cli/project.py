@@ -5,7 +5,9 @@ import click
 from great_expectations import DataContext
 from great_expectations import exceptions as ge_exceptions
 from great_expectations.cli.util import cli_message
-from great_expectations.core.usage_statistics.usage_statistics import send_usage_message
+from great_expectations.core.usage_statistics.usage_statistics import (
+    send_usage_message,
+)
 
 
 @click.group()
@@ -51,5 +53,7 @@ def do_config_check(target_directory):
         ge_exceptions.UnsupportedConfigVersionError,
         ge_exceptions.DataContextError,
         ge_exceptions.PluginClassNotFoundError,
+        ge_exceptions.PluginModuleNotFoundError,
+        ge_exceptions.GreatExpectationsError,
     ) as err:
         return False, err.message, None

@@ -1,10 +1,10 @@
-import pytest
 import os
-import boto3
-from moto import mock_s3
-from mock import patch
 
-from great_expectations.exceptions import StoreBackendError
+import boto3
+import pytest
+from botocore.exceptions import ClientError
+from mock import patch
+from moto import mock_s3
 
 from great_expectations.data_context.store import (
     InMemoryStoreBackend,
@@ -12,6 +12,7 @@ from great_expectations.data_context.store import (
     TupleS3StoreBackend,
     TupleGCSStoreBackend,
 )
+from great_expectations.exceptions import StoreBackendError
 from great_expectations.util import (
     gen_directory_tree_str,
 )
@@ -75,7 +76,8 @@ def test_tuple_filesystem_store_filepath_prefix_error(tmp_path_factory):
             base_directory=project_path,
             filepath_prefix="invalid_prefix_ends_with\\")
     assert "filepath_prefix may not end with" in e.value.message
-
+   
+    
 
 def test_FilesystemStoreBackend_two_way_string_conversion(tmp_path_factory):
     path = str(tmp_path_factory.mktemp('test_FilesystemStoreBackend_two_way_string_conversion__dir'))
@@ -89,17 +91,14 @@ def test_FilesystemStoreBackend_two_way_string_conversion(tmp_path_factory):
 
     tuple_ = ("A__a", "B-b", "C")
     converted_string = my_store._convert_key_to_filepath(tuple_)
-    print(converted_string)
     assert converted_string == "A__a/B-b/C/foo-C-expectations.txt"
 
     recovered_key = my_store._convert_filepath_to_key("A__a/B-b/C/foo-C-expectations.txt")
-    print(recovered_key)
     assert recovered_key == tuple_
     
     with pytest.raises(ValueError):
         tuple_ = ("A/a", "B-b", "C")
         converted_string = my_store._convert_key_to_filepath(tuple_)
-        print(converted_string)
 
 
 def test_TupleFilesystemStoreBackend(tmp_path_factory):
@@ -122,16 +121,17 @@ def test_TupleFilesystemStoreBackend(tmp_path_factory):
     my_store.set(("BBB",), "bbb")
     assert my_store.get(("BBB",)) == "bbb"
 
-    print(my_store.list_keys())
     assert set(my_store.list_keys()) == {("AAA",), ("BBB",)}
 
-    print(gen_directory_tree_str(project_path))
     assert gen_directory_tree_str(project_path) == """\
 test_TupleFilesystemStoreBackend__dir0/
     my_file_AAA
     my_file_BBB
 """
-
+    my_store.remove_key(("BBB",))
+    with pytest.raises(FileNotFoundError):
+        assert my_store.get(("BBB",)) == ""
+    
 
 def test_TupleFilesystemStoreBackend_ignores_jupyter_notebook_checkpoints(tmp_path_factory):
     project_path = str(tmp_path_factory.mktemp('things'))
@@ -159,12 +159,11 @@ things0/
         foo.json
 """
 
-    print(my_store.list_keys())
     assert set(my_store.list_keys()) == {("AAA", )}
 
 
 @mock_s3
-def test_TupleS3StoreBackend():
+def test_TupleS3StoreBackend_with_prefix():
     """
     What does this test test and why?
 
@@ -206,9 +205,63 @@ def test_TupleS3StoreBackend():
     assert set(
         [s3_object_info['Key'] for s3_object_info in
          boto3.client('s3').list_objects(Bucket=bucket, Prefix=prefix)['Contents']]) == {
-        'this_is_a_test_prefix/my_file_AAA', 'this_is_a_test_prefix/my_file_BBB'}
-    
+               'this_is_a_test_prefix/my_file_AAA', 'this_is_a_test_prefix/my_file_BBB'}
+
     assert my_store.get_url_for_key(('AAA',)) == 'https://s3.amazonaws.com/%s/%s/my_file_AAA' % (bucket, prefix)
+    assert my_store.get_url_for_key(('BBB',)) == 'https://s3.amazonaws.com/%s/%s/my_file_BBB' % (bucket, prefix)
+
+    my_store.remove_key(("BBB",))
+    with pytest.raises(ClientError) as exc:
+        my_store.get(("BBB",))
+    assert exc.value.response['Error']['Code'] == 'NoSuchKey'
+          
+
+@mock_s3
+def test_TupleS3StoreBackend_with_empty_prefixes():
+    """
+    What does this test test and why?
+
+    We will exercise the store backend's set method twice and then verify
+    that the we calling get and list methods will return the expected keys.
+
+    We will also check that the objects are stored on S3 at the expected location,
+    and that the correct S3 URL for the object can be retrieved.
+    """
+    bucket = "leakybucket"
+    prefix = ""
+
+    # create a bucket in Moto's mock AWS environment
+    conn = boto3.resource('s3', region_name='us-east-1')
+    conn.create_bucket(Bucket=bucket)
+
+    my_store = TupleS3StoreBackend(
+        filepath_template="my_file_{0}",
+        bucket=bucket,
+        prefix=prefix,
+    )
+
+    # We should be able to list keys, even when empty
+    keys = my_store.list_keys()
+    assert len(keys) == 0
+
+    my_store.set(("AAA",), "aaa", content_type='text/html; charset=utf-8')
+    assert my_store.get(("AAA",)) == 'aaa'
+
+    obj = boto3.client('s3').get_object(Bucket=bucket, Key=prefix + "/my_file_AAA")
+    assert obj["ContentType"] == 'text/html; charset=utf-8'
+    assert obj["ContentEncoding"] == 'utf-8'
+
+    my_store.set(("BBB",), "bbb")
+    assert my_store.get(("BBB",)) == 'bbb'
+
+    assert set(my_store.list_keys()) == {("AAA",), ("BBB",)}
+    assert set(
+        [s3_object_info['Key'] for s3_object_info in
+         boto3.client('s3').list_objects(Bucket=bucket, Prefix=prefix)['Contents']]) == {
+        'my_file_AAA', 'my_file_BBB'}
+
+    assert my_store.get_url_for_key(('AAA',)) == 'https://s3.amazonaws.com/leakybucket/my_file_AAA'
+    assert my_store.get_url_for_key(('BBB',)) == 'https://s3.amazonaws.com/leakybucket/my_file_BBB'
 
 
 def test_TupleGCSStoreBackend():
@@ -284,3 +337,13 @@ def test_TupleGCSStoreBackend():
         my_store.list_keys()
 
         mock_client.list_blobs.assert_called_once_with("leakybucket", prefix="this_is_a_test_prefix")
+
+        my_store.remove_key("leakybucket", prefix="this_is_a_test_prefix")
+   
+        from google.cloud.exceptions import NotFound
+        
+        try: 
+            mock_client.get_bucket.assert_called_once_with("leakybucket")
+        except NotFound:
+            pass
+        

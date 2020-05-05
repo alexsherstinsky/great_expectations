@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from collections import OrderedDict
 import os
 
@@ -208,7 +206,6 @@ def test_cli_datasource_profile_answering_no(
 
     stdout = result.output
     assert result.exit_code == 0
-    assert "Warning - this is a BETA feature." in stdout
     assert "Profiling 'wow_a_datasource'" in stdout
     assert "Skipping profiling for now." in stdout
 

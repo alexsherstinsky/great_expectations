@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import os
 import subprocess
 
@@ -10,13 +8,15 @@ from great_expectations.cli import cli
 from tests.cli.utils import assert_no_logging_messages_or_tracebacks
 
 
+# TODO When deprecating tap, many of these tests can be simplified to test the toolkit functions
+
 def test_tap_help_output(caplog,):
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(cli, ["tap"], catch_exceptions=False)
     assert result.exit_code == 0
     assert (
         """Commands:
-  new  BETA! Create a new tap file for easy deployments"""
+  new  Create a new tap file for easy deployments."""
         in result.stdout
     )
     assert_no_logging_messages_or_tracebacks(caplog, result)
@@ -40,7 +40,6 @@ def test_tap_new_with_filename_not_ending_in_py_raises_helpful_error(
     stdout = result.stdout
 
     assert result.exit_code == 1
-    assert "This is a BETA feature which may change" in stdout
     assert "Tap filename must end in .py. Please correct and re-run" in stdout
 
     assert_no_logging_messages_or_tracebacks(caplog, result)
@@ -62,7 +61,6 @@ def test_tap_new_on_context_with_no_datasources(caplog, empty_data_context):
     stdout = result.stdout
 
     assert result.exit_code == 1
-    assert "This is a BETA feature which may change" in stdout
     assert "No datasources found in the context" in stdout
 
     assert_no_logging_messages_or_tracebacks(caplog, result)
@@ -89,7 +87,6 @@ def test_tap_new_with_non_existant_suite(caplog, empty_data_context):
     stdout = result.stdout
 
     assert result.exit_code == 1
-    assert "This is a BETA feature which may change" in stdout
     assert "Could not find a suite named `not_a_suite`" in stdout
 
     assert_no_logging_messages_or_tracebacks(caplog, result)
@@ -125,7 +122,6 @@ def test_tap_new_on_context_with_2_datasources_with_no_datasource_option_prompts
     )
     stdout = result.stdout
 
-    assert "This is a BETA feature which may change" in stdout
     assert "Select a datasource" in stdout
     assert result.exit_code == 1
 
@@ -165,8 +161,8 @@ def test_tap_new_on_context_builds_runnable_tap_file(
         catch_exceptions=False,
     )
     stdout = result.stdout
+    print(stdout)
 
-    assert "This is a BETA feature which may change" in stdout
     assert "Enter the path (relative or absolute) of a data file" in stdout
     assert "A new tap has been generated" in stdout
     assert result.exit_code == 0
@@ -229,7 +225,6 @@ def test_tap_new_on_context_builds_runnable_tap_file_that_fails_validation(
     )
     stdout = result.stdout
 
-    assert "This is a BETA feature which may change" in stdout
     assert "Enter the path (relative or absolute) of a data file" in stdout
     assert "A new tap has been generated" in stdout
     assert result.exit_code == 0
@@ -281,7 +276,6 @@ def test_tap_new_on_context_with_1_datasources_with_no_datasource_option_prompts
     )
     stdout = result.stdout
 
-    assert "This is a BETA feature which may change" in stdout
     assert "Select a datasource" not in stdout
     assert "A new tap has been generated" in stdout
     assert result.exit_code == 0

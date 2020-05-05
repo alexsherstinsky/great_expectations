@@ -1,21 +1,19 @@
+import logging
 import os
 import random
 import re
-import logging
+import shutil
 # PYTHON 2 - py2 - update to ABC direct use rather than __metaclass__ once we drop py2 support
+import logging
 from abc import ABCMeta
 
-from six import string_types
-
 from great_expectations.data_context.store.store_backend import StoreBackend
-from great_expectations.data_context.util import safe_mmkdir
 from great_expectations.exceptions import StoreBackendError
 
 logger = logging.getLogger(__name__)
 
 
-class TupleStoreBackend(StoreBackend):
-    __metaclass__ = ABCMeta
+class TupleStoreBackend(StoreBackend, metaclass=ABCMeta):
     """
     If filepath_template is provided, the key to this StoreBackend abstract class must be a tuple with 
     fixed length equal to the number of unique components matching the regex r"{\d+}"
@@ -69,10 +67,10 @@ class TupleStoreBackend(StoreBackend):
                     ))
 
     def _validate_value(self, value):
-        if not isinstance(value, string_types) and not isinstance(value, bytes):
+        if not isinstance(value, str) and not isinstance(value, bytes):
             raise TypeError("Values in {0} must be instances of {1} or {2}, not {3}".format(
                 self.__class__.__name__,
-                string_types,
+                str,
                 bytes,
                 type(value),
             ))
@@ -206,14 +204,14 @@ class TupleFilesystemStoreBackend(TupleStoreBackend):
             else:
                 self.full_base_directory = os.path.join(root_directory, base_directory)
 
-        safe_mmkdir(str(os.path.dirname(self.full_base_directory)))
+        os.makedirs(str(os.path.dirname(self.full_base_directory)), exist_ok=True)
 
     def _get(self, key):
         filepath = os.path.join(
             self.full_base_directory,
             self._convert_key_to_filepath(key)
         )
-        with open(filepath, 'r') as infile:
+        with open(filepath) as infile:
             return infile.read()
 
     def _set(self, key, value, **kwargs):
@@ -225,14 +223,10 @@ class TupleFilesystemStoreBackend(TupleStoreBackend):
         )
         path, filename = os.path.split(filepath)
 
-        safe_mmkdir(str(path))
+        os.makedirs(str(path), exist_ok=True)
         with open(filepath, "wb") as outfile:
-            if isinstance(value, string_types):
-                # Following try/except is to support py2, since both str and bytes objects pass above condition
-                try:
-                    outfile.write(value.encode("utf-8"))
-                except UnicodeDecodeError:
-                    outfile.write(value)
+            if isinstance(value, str):
+                outfile.write(value.encode("utf-8"))
             else:
                 outfile.write(value)
         return filepath
@@ -263,6 +257,20 @@ class TupleFilesystemStoreBackend(TupleStoreBackend):
                     key_list.append(key)
 
         return key_list
+    
+    def remove_key(self, key):
+        if not isinstance(key, tuple):
+            key = key.to_tuple()
+
+        filepath = os.path.join(
+            self.full_base_directory,
+            self._convert_key_to_filepath(key)
+        )
+        path, filename = os.path.split(filepath)
+        if os.path.exists(filepath):
+            if shutil.rmtree(self.full_base_directory):
+                return True
+        return False
 
     def get_url_for_key(self, key, protocol=None):
         path = self._convert_key_to_filepath(key)
@@ -328,13 +336,9 @@ class TupleS3StoreBackend(TupleStoreBackend):
         import boto3
         s3 = boto3.resource('s3')
         result_s3 = s3.Object(self.bucket, s3_object_key)
-        if isinstance(value, string_types):
-            # Following try/except is to support py2, since both str and bytes objects pass above condition
-            try:
-                result_s3.put(Body=value.encode(content_encoding), ContentEncoding=content_encoding,
-                              ContentType=content_type)
-            except TypeError:
-                result_s3.put(Body=value, ContentType=content_type)
+        if isinstance(value, str):
+            result_s3.put(Body=value.encode(content_encoding), ContentEncoding=content_encoding,
+                          ContentType=content_type)
         else:
             result_s3.put(Body=value, ContentType=content_type)
         return s3_object_key
@@ -380,7 +384,28 @@ class TupleS3StoreBackend(TupleStoreBackend):
         else:
             location = "s3-" + location
         s3_key = self._convert_key_to_filepath(key)
-        return "https://%s.amazonaws.com/%s/%s/%s" % (location, self.bucket, self.prefix, s3_key)
+        if not self.prefix:
+            return f"https://{location}.amazonaws.com/{self.bucket}/{s3_key}"
+        return f"https://{location}.amazonaws.com/{self.bucket}/{self.prefix}/{s3_key}"
+
+    def remove_key(self, key):
+        import boto3
+        from botocore.exceptions import ClientError
+        s3 = boto3.resource('s3')
+        s3_key = self._convert_key_to_filepath(key)
+        if s3_key:
+            try:
+                #s3.Object(boto3.client('s3').get_bucket_location(Bucket=self.bucket), s3_key).delete()
+                objects_to_delete = s3.meta.client.list_objects(Bucket=self.bucket, Prefix=self.prefix)
+
+                delete_keys = {'Objects' : []}
+                delete_keys['Objects'] = [{'Key' : k} for k in [obj['Key'] for obj in objects_to_delete.get('Contents', [])]]
+                s3.meta.client.delete_objects(Bucket=self.bucket, Delete=delete_keys)
+                return True
+            except ClientError as e:
+                return False
+        else:
+            return False
 
     def _has_key(self, key):
         all_keys = self.list_keys()
@@ -443,13 +468,9 @@ class TupleGCSStoreBackend(TupleStoreBackend):
         gcs = storage.Client(project=self.project)
         bucket = gcs.get_bucket(self.bucket)
         blob = bucket.blob(gcs_object_key)
-        if isinstance(value, string_types):
-            # Following try/except is to support py2, since both str and bytes objects pass above condition
-            try:
-                blob.upload_from_string(value.encode(content_encoding), content_encoding=content_encoding,
-                                        content_type=content_type)
-            except TypeError:
-                blob.upload_from_string(value, content_type=content_type)
+        if isinstance(value, str):
+            blob.upload_from_string(value.encode(content_encoding), content_encoding=content_encoding,
+                                    content_type=content_type)
         else:
             blob.upload_from_string(value, content_type=content_type)
         return gcs_object_key
@@ -479,6 +500,17 @@ class TupleGCSStoreBackend(TupleStoreBackend):
     def get_url_for_key(self, key, protocol=None):
         path = self._convert_key_to_filepath(key)
         return "https://storage.googleapis.com/" + self.bucket + "/" + path
+
+    def remove_key(self, key):
+        from google.cloud import storage
+        from gcloud.exceptions import NotFound
+        gcs = storage.Client(project=self.project)
+        bucket = gcs.get_bucket(self.bucket)
+        try:
+            bucket.delete_blobs(blobs=bucket.list_blobs(prefix=self.prefix))
+        except NotFound:
+            return False
+        return True
 
     def _has_key(self, key):
         all_keys = self.list_keys()

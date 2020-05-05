@@ -1,10 +1,9 @@
 import logging
-
-from collections import OrderedDict
 import os
-
 import traceback
+from collections import OrderedDict
 
+import great_expectations.exceptions as exceptions
 from great_expectations.core import nested_update
 from great_expectations.data_context.store.html_site_store import (
     HtmlSiteStore,
@@ -14,9 +13,7 @@ from great_expectations.data_context.types.resource_identifiers import (
     ExpectationSuiteIdentifier,
     ValidationResultIdentifier,
 )
-
 from great_expectations.data_context.util import instantiate_class_from_config
-import great_expectations.exceptions as exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +215,9 @@ class SiteBuilder(object):
                     class_name=site_section_config['class_name']
                 )
 
+    def clean_site(self):
+        self.target_store.clean_site()
+
     def build(self, resource_identifiers=None):
         """
 
@@ -342,7 +342,7 @@ class DefaultSiteSectionBuilder(object):
 
             try:
                 resource = self.source_store.get(resource_key)
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 logger.warning(f"File {resource_key.to_fixed_length_tuple()} could not be found. Skipping.")
                 continue
 
@@ -487,7 +487,6 @@ class DefaultSiteIndexBuilder(object):
 
         if run_id:
             path_components = ["validations"] + expectation_suite_name.split(".") + [run_id] + [batch_identifier]
-            # py2 doesn't support
             # filepath = os.path.join("validations", batch_identifier, *expectation_suite_name.split("."), run_id)
             filepath = os.path.join(*path_components)
             filepath += ".html"
@@ -516,7 +515,7 @@ class DefaultSiteIndexBuilder(object):
         #     last_datasource_class_by_name = datasource_classes_by_name[-1]
         #     last_datasource_class_name = last_datasource_class_by_name["class_name"]
         #     last_datasource_name = last_datasource_class_by_name["name"]
-        #     last_datasource = self.data_context.datasources[last_datasource_name]
+        #     last_datasource = self.data_context.get_datasource(last_datasource_name)
         #
         #     if last_datasource_class_name == "SqlAlchemyDatasource":
         #         try:
@@ -642,7 +641,7 @@ class DefaultSiteIndexBuilder(object):
                     run_id=profiling_result_key.run_id,
                     validation_success=validation_success
                 )
-            except Exception as e:
+            except Exception:
                 error_msg = "Profiling result not found: {0:s} - skipping".format(str(profiling_result_key.to_tuple()))
                 logger.warning(error_msg)
 
@@ -664,7 +663,7 @@ class DefaultSiteIndexBuilder(object):
                     run_id=validation_result_key.run_id,
                     validation_success=validation_success
                 )
-            except Exception as e:
+            except Exception:
                 error_msg = "Validation result not found: {0:s} - skipping".format(str(validation_result_key.to_tuple()))
                 logger.warning(error_msg)
 

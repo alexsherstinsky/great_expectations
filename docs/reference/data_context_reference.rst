@@ -39,7 +39,7 @@ configuration information. For example, the following simple configuration suppo
         default:
           class_name: InMemoryGenerator
 
-The following configuration demonstrates a more complicated configuration for reading assets from s3 into pandas. It
+The following configuration demonstrates a more complicated configuration for reading assets from S3 into pandas. It
 will access the amazon public NYC taxi data and provides access to two assets: 'taxi-green' and 'taxi-fhv' which
 represent two public datasets available from the resource.
 
@@ -380,7 +380,7 @@ following to your data context configuration:
 
 .. code-block:: yaml
 
-    anonymized_usage_statistics:
+    anonymous_usage_statistics:
       data_context_id: <randomly-generated-uuid>
       enabled: false
 

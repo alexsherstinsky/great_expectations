@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import os
 
 from click.testing import CliRunner
@@ -145,7 +143,6 @@ def test_cli_datasource_profile_answering_no(
     stdout = result.stdout
     print(stdout)
     assert result.exit_code == 0
-    assert "Warning - this is a BETA feature." in stdout
     assert "Profiling 'my_datasource'" in stdout
     assert "Skipping profiling for now." in stdout
     assert_no_logging_messages_or_tracebacks(caplog, result)
