@@ -6,7 +6,6 @@ from datetime import datetime
 
 import pandas as pd
 import pytest
-from six import PY2
 
 import great_expectations as ge
 from great_expectations.core import (
@@ -266,7 +265,6 @@ def test_validate_with_invalid_result_catch_exceptions_false(validate_result_dic
 
 @mock.patch('great_expectations.core.ExpectationValidationResult.validate_result_dict', return_value=False)
 def test_validate_with_invalid_result(validate_result_dict):
-
     with open(file_relative_path(__file__, "./test_sets/titanic_expectations.json")) as f:
         my_expectation_suite = expectationSuiteSchema.loads(f.read())
 
@@ -282,7 +280,11 @@ def test_validate_with_invalid_result(validate_result_dict):
         mock_datetime.utcnow.return_value = datetime(1955, 11, 5)
         results = my_df.validate()  # catch_exceptions=True is default
 
-    with open(file_relative_path(__file__, './test_sets/titanic_expected_data_asset_validate_results_with_exceptions.json')) as f:
+    with open(
+            file_relative_path(
+                __file__, './test_sets/titanic_expected_data_asset_validate_results_with_exceptions.json'
+            )
+    ) as f:
         expected_results = expectationSuiteValidationResultSchema.loads(f.read())
 
     del results.meta["great_expectations.__version__"]
@@ -412,11 +414,17 @@ class TestIO(unittest.TestCase):
         df = ge.read_json(
             script_path+'/test_sets/test_json_data_file.json',
         )
+        assert df["x"][0] == "i"
+        assert isinstance(df, PandasDataset)
+        assert sorted(list(df.keys())) == ['x', 'y', 'z']
 
         df = ge.read_json(
             script_path+'/test_sets/nested_test_json_data_file.json',
             accessor_func=lambda x: x["data"]
         )
+        assert df["x"][0] == "i"
+        assert isinstance(df, PandasDataset)
+        assert sorted(list(df.keys())) == ['x', 'y', 'z']
 
     def test_read_excel(self):
         script_path = os.path.dirname(os.path.realpath(__file__))

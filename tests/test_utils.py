@@ -1,5 +1,3 @@
-from __future__ import division
-
 import copy
 import importlib
 import locale
@@ -586,16 +584,10 @@ def is_library_installed(library_name):
     """
     Tests if a library is installed.
     """
-    # Gross legacy python 2 hacks
-    try:
-        ModuleNotFoundError
-    except NameError:
-        ModuleNotFoundError = ImportError
-
     try:
         importlib.import_module(library_name)
         return True
-    except ModuleNotFoundError as e:
+    except ModuleNotFoundError:
         return False
 
 
@@ -605,4 +597,3 @@ def safe_remove(path):
             os.remove(path)
         except OSError as e:
             print(e)
-            pass

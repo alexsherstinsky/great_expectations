@@ -1,23 +1,23 @@
 import logging
 
-from six import string_types
+import traceback
 
 from ..renderer import Renderer
 from ...types import (
     RenderedMarkdownContent,
     RenderedStringTemplateContent,
     CollapseContent,
-    TextContent)
+    TextContent,
+)
 from ....core import (
     ExpectationValidationResult,
-    ExpectationConfiguration
+    ExpectationConfiguration,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class ContentBlockRenderer(Renderer):
-
     _rendered_component_type = TextContent
     _default_header = ""
 
@@ -34,6 +34,12 @@ class ContentBlockRenderer(Renderer):
     @classmethod
     def render(cls, render_object, **kwargs):
         cls.validate_input(render_object)
+
+        data_docs_exception_message = f'''\
+An unexpected Exception occurred during data docs rendering.  Because of this error, certain parts of data docs will \
+not be rendered properly and/or may not appear altogether.  Please use the trace, included in this message, to \
+diagnose and repair the underlying issue.  Detailed information follows:  
+        '''
 
         if isinstance(render_object, list):
             blocks = []
@@ -54,7 +60,10 @@ class ContentBlockRenderer(Renderer):
                             **kwargs
                         )
                     except Exception as e:
-                        logger.error("Exception occurred during data docs rendering: ", e, exc_info=True)
+                        exception_traceback = traceback.format_exc()
+                        exception_message = data_docs_exception_message \
+                            + f'{type(e).__name__}: "{str(e)}".  Traceback: "{exception_traceback}".'
+                        logger.error(exception_message, e, exc_info=True)
 
                         if isinstance(obj_, ExpectationValidationResult):
                             content_block_fn = cls._get_content_block_fn("_missing_content_block_fn")
@@ -122,7 +131,10 @@ class ContentBlockRenderer(Renderer):
                         **kwargs
                     )
                 except Exception as e:
-                    logger.error("Exception occurred during data docs rendering: ", e, exc_info=True)
+                    exception_traceback = traceback.format_exc()
+                    exception_message = data_docs_exception_message \
+                        + f'{type(e).__name__}: "{str(e)}".  Traceback: "{exception_traceback}".'
+                    logger.error(exception_message, e, exc_info=True)
 
                     if isinstance(render_object, ExpectationValidationResult):
                         content_block_fn = cls._get_content_block_fn("_missing_content_block_fn")
@@ -169,7 +181,7 @@ class ContentBlockRenderer(Renderer):
             notes = expectation.meta["notes"]
             note_content = None
 
-            if isinstance(notes, string_types):
+            if isinstance(notes, str):
                 note_content = [notes]
 
             elif isinstance(notes, list):
@@ -178,7 +190,7 @@ class ContentBlockRenderer(Renderer):
             elif isinstance(notes, dict):
                 if "format" in notes:
                     if notes["format"] == "string":
-                        if isinstance(notes["content"], string_types):
+                        if isinstance(notes["content"], str):
                             note_content = [notes["content"]]
                         elif isinstance(notes["content"], list):
                             note_content = notes["content"]
@@ -186,7 +198,7 @@ class ContentBlockRenderer(Renderer):
                             logger.warning("Unrecognized Expectation suite notes format. Skipping rendering.")
 
                     elif notes["format"] == "markdown":
-                        if isinstance(notes["content"], string_types):
+                        if isinstance(notes["content"], str):
                             note_content = [
                                 RenderedMarkdownContent(**{
                                     "content_block_type": "markdown",

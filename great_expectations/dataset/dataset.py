@@ -1,19 +1,15 @@
-from __future__ import division
-
 import inspect
-import sys
-from six import PY3, string_types
-from functools import wraps
+from typing import List
+from itertools import zip_longest
+from functools import lru_cache, wraps
+
 from numbers import Number
 from dateutil.parser import parse
-from datetime import datetime, timedelta
+from datetime import datetime
 
-if sys.version_info.major == 2:  # If python 2
-    from itertools import izip_longest as zip_longest
-    from backports.functools_lru_cache import lru_cache
-elif sys.version_info.major == 3:  # If python 3
-    from itertools import zip_longest
-    from functools import lru_cache
+import pandas as pd
+import numpy as np
+from scipy import stats
 
 from great_expectations.data_asset.data_asset import DataAsset
 from great_expectations.data_asset.util import DocInherit, parse_result_format
@@ -23,10 +19,6 @@ from great_expectations.dataset.util import (
     is_valid_partition_object,
     is_valid_categorical_partition_object
 )
-
-import pandas as pd
-import numpy as np
-from scipy import stats
 
 
 class MetaDataset(DataAsset):
@@ -87,10 +79,7 @@ class MetaDataset(DataAsset):
             <great_expectations.dataset.dataset.Dataset.expect_column_mean_to_be_between>` \
             for an example of a column_aggregate_expectation
         """
-        if PY3:
-            argspec = inspect.getfullargspec(func)[0][1:]
-        else:
-            argspec = inspect.getargspec(func)[0][1:]
+        argspec = inspect.getfullargspec(func)[0][1:]
 
         @cls.expectation(argspec)
         @wraps(func)
@@ -195,7 +184,7 @@ class Dataset(MetaDataset):
         """Returns: int, table column count"""
         raise NotImplementedError
 
-    def get_table_columns(self):
+    def get_table_columns(self) -> List[str]:
         """Returns: List[str], list of column names"""
         raise NotImplementedError
 
@@ -303,7 +292,7 @@ class Dataset(MetaDataset):
             min_, _25, _75, max_ = self.get_column_quantiles(column, (0.0, 0.25, 0.75, 1.0),
                                                              allow_relative_error=allow_relative_error)
             iqr = _75 - _25
-            if (iqr < 1e-10):  # Consider IQR 0 and do not use variance-based estimator
+            if iqr < 1e-10:  # Consider IQR 0 and do not use variance-based estimator
                 n_bins = sturges
             else:
                 fd = (2 * float(iqr)) / (nonnull_count**(1/3))
@@ -3146,7 +3135,7 @@ class Dataset(MetaDataset):
         result_format=None, include_config=True, catch_exceptions=None,
         meta=None
     ):
-        """Expect the column to sum to be between an min and max value
+        """Expect the column minimum to be between an min and max value
 
         expect_column_min_to_be_between is a \
         :func:`column_aggregate_expectation <great_expectations.dataset.MetaDataset.column_aggregate_expectation>`.
@@ -3392,7 +3381,6 @@ class Dataset(MetaDataset):
 
             success = above_min and below_max
 
-
         if parse_strings_as_datetimes:
             if output_strftime_format:
                 column_max = datetime.strftime(column_max, output_strftime_format)
@@ -3505,7 +3493,7 @@ class Dataset(MetaDataset):
         # Handle NaN: if something's there that was not expected, substitute the relevant value for tail_weight_holdout
         if na_counts["expected"] > 0:
             # Scale existing expected values
-            test_df["expected"] = test_df["expected"] * (1 - tail_weight_holdout)
+            test_df["expected"] *= 1 - tail_weight_holdout
             # Fill NAs with holdout.
             test_df["expected"] = test_df["expected"].fillna(
                 element_count * (tail_weight_holdout / na_counts["expected"]))
@@ -3745,7 +3733,7 @@ class Dataset(MetaDataset):
         """
         if partition_object is None:
             if bucketize_data:
-                partition_object = build_continuous_partition_object(dataset=self, column=column, bins='auto')
+                partition_object = build_continuous_partition_object(dataset=self, column=column)
             else:
                 partition_object = build_categorical_partition_object(dataset=self, column=column)
 
@@ -3792,8 +3780,7 @@ class Dataset(MetaDataset):
             # substitute the relevant value for tail_weight_holdout
             if na_counts['expected'] > 0:
                 # Scale existing expected values
-                test_df['expected'] = test_df['expected'] * \
-                    (1 - tail_weight_holdout)
+                test_df['expected'] *= 1 - tail_weight_holdout
                 # Fill NAs with holdout.
                 qk = test_df['expected'].fillna(
                     tail_weight_holdout / na_counts['expected'])
@@ -3843,9 +3830,7 @@ class Dataset(MetaDataset):
             # Add in the frequencies observed above or below the provided partition
             # below_partition = len(np.where(column < partition_object['bins'][0])[0])
             # above_partition = len(np.where(column > partition_object['bins'][-1])[0])
-            below_partition = self.get_column_count_in_range(
-                column, max_val=partition_object['bins'][0], strict_max=True
-            )
+            below_partition = self.get_column_count_in_range(column, max_val=partition_object['bins'][0])
             above_partition = self.get_column_count_in_range(
                 column, min_val=partition_object['bins'][-1], strict_min=True
             )
@@ -4201,5 +4186,5 @@ class Dataset(MetaDataset):
 
     @staticmethod
     def _parse_value_set(value_set):
-        parsed_value_set = [parse(value) if isinstance(value, string_types) else value for value in value_set]
+        parsed_value_set = [parse(value) if isinstance(value, str) else value for value in value_set]
         return parsed_value_set

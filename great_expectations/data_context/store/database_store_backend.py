@@ -1,4 +1,3 @@
-import json
 import great_expectations.exceptions as ge_exceptions
 
 try:
@@ -15,7 +14,7 @@ from great_expectations.data_context.store.store_backend import StoreBackend
 class DatabaseStoreBackend(StoreBackend):
 
     def __init__(self, credentials, table_name, key_columns, fixed_length_key=True):
-        super(DatabaseStoreBackend, self).__init__(fixed_length_key=fixed_length_key)
+        super().__init__(fixed_length_key=fixed_length_key)
         if not sqlalchemy:
             raise ge_exceptions.DataContextError("ModuleNotFoundError: No module named 'sqlalchemy'")
 
@@ -69,3 +68,6 @@ class DatabaseStoreBackend(StoreBackend):
             )
         )
         return [tuple(row) for row in self.engine.execute(sel).fetchall()]
+
+    def remove_key(self, key):
+        raise NotImplementedError
