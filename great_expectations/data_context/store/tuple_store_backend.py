@@ -257,7 +257,21 @@ class TupleFilesystemStoreBackend(TupleStoreBackend):
                     key_list.append(key)
 
         return key_list
+   
     
+    def rrmdir(self, mroot, curpath):
+        """
+        recursively removes empty dirs between curpath and mroot inclusive
+        """
+        try:
+            while not os.listdir(curpath) and os.path.exists(curpath) and mroot!=curpath:
+                f2=os.path.dirname(curpath)
+                os.rmdir(curpath)
+                curpath=f2
+        except (NotADirectoryError, FileNotFoundError):
+            pass
+
+
     def remove_key(self, key):
         if not isinstance(key, tuple):
             key = key.to_tuple()
@@ -268,8 +282,10 @@ class TupleFilesystemStoreBackend(TupleStoreBackend):
         )
         path, filename = os.path.split(filepath)
         if os.path.exists(filepath):
-            if shutil.rmtree(self.full_base_directory):
-                return True
+            d_path = os.path.dirname(filepath)
+            os.remove(filepath)
+            self.rrmdir(self.full_base_directory, d_path)
+            return True
         return False
 
     def get_url_for_key(self, key, protocol=None):
@@ -469,8 +485,7 @@ class TupleGCSStoreBackend(TupleStoreBackend):
         bucket = gcs.get_bucket(self.bucket)
         blob = bucket.blob(gcs_object_key)
         if isinstance(value, str):
-            blob.upload_from_string(value.encode(content_encoding), content_encoding=content_encoding,
-                                    content_type=content_type)
+            blob.upload_from_string(value.encode(content_encoding), content_type=content_type)
         else:
             blob.upload_from_string(value, content_type=content_type)
         return gcs_object_key
