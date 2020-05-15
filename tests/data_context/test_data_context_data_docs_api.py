@@ -1,6 +1,5 @@
 import mock
 import pytest
-
 from great_expectations.exceptions import DataContextError
 
 
@@ -183,7 +182,9 @@ def test_get_docs_sites_urls_with_two_local_sites_specify_one(
     context_with_multiple_sites,
 ):
     context = context_with_multiple_sites
-    obs = context.get_docs_sites_urls(site_name="another_local_site", only_if_exists=False)
+    obs = context.get_docs_sites_urls(
+        site_name="another_local_site", only_if_exists=False
+    )
     assert len(obs) == 1
     assert obs[0]["site_name"] == "another_local_site"
 

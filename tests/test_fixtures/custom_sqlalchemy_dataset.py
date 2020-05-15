@@ -15,9 +15,4 @@ class CustomSqlAlchemyDataset(SqlAlchemyDataset):
         else:
             success = func_value == value
 
-        return {
-            "success": success,
-            "result": {
-                "observed_value": func_value
-            }
-        }
+        return {"success": success, "result": {"observed_value": func_value}}

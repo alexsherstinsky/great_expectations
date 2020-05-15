@@ -3,14 +3,13 @@ import os
 
 import nbformat
 import pytest
-from nbconvert.preprocessors import ExecutePreprocessor
-
 from great_expectations import DataContext
 from great_expectations.cli.suite import _suite_edit
 from great_expectations.core import ExpectationSuiteSchema
 from great_expectations.render.renderer.suite_edit_notebook_renderer import (
     SuiteEditNotebookRenderer,
 )
+from nbconvert.preprocessors import ExecutePreprocessor
 
 
 @pytest.fixture
@@ -1466,7 +1465,7 @@ def test_notebook_execution_with_pandas_backend(titanic_data_context):
         directory=root_dir,
         jupyter=False,
         batch_kwargs=json_batch_kwargs,
-        usage_event="test_notebook_execution"
+        usage_event="test_notebook_execution",
     )
     edit_notebook_path = os.path.join(uncommitted_dir, "edit_warning.ipynb")
     assert os.path.isfile(edit_notebook_path)

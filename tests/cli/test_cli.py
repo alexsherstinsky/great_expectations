@@ -2,11 +2,10 @@
 import os
 
 from click.testing import CliRunner
-from ruamel.yaml import YAML
-
 from great_expectations import __version__ as ge_version
 from great_expectations.cli import cli
 from great_expectations.exceptions import ConfigNotFoundError
+from ruamel.yaml import YAML
 from tests.cli.utils import assert_no_logging_messages_or_tracebacks
 
 yaml = YAML()
@@ -148,13 +147,15 @@ def test_cli_config_not_found_raises_error_for_all_commands(tmp_path_factory):
             cli, ["suite", "delete", "deleteme", "-d", "FAKE"], catch_exceptions=False
         )
         assert error_message in result.output
-        #expectation create new
+        # expectation create new
         # suite new
         result = runner.invoke(
             cli, ["suite", "new", "-d", "./"], catch_exceptions=False
         )
         assert error_message in result.output
-        result = runner.invoke(cli, ["suite", "delete", "deleteme"], catch_exceptions=False)
+        result = runner.invoke(
+            cli, ["suite", "delete", "deleteme"], catch_exceptions=False
+        )
         assert error_message in result.output
 
         # datasource delete
@@ -162,18 +163,18 @@ def test_cli_config_not_found_raises_error_for_all_commands(tmp_path_factory):
             cli, ["datasource", "delete", "new"], catch_exceptions=False
         )
         assert error_message in result.output
-        #create new before delete again
+        # create new before delete again
         # datasource new
         result = runner.invoke(
             cli, ["datasource", "new", "-d", "./"], catch_exceptions=False
         )
- 
+
         # data_docs clean
         result = runner.invoke(
             cli, ["docs", "clean", "-d", "FAKE"], catch_exceptions=False
         )
         assert error_message in result.output
-        #build docs before deleting again
+        # build docs before deleting again
         result = runner.invoke(
             cli, ["docs", "build", "-d", "./", "--no-view"], catch_exceptions=False
         )
@@ -189,8 +190,8 @@ def test_cli_config_not_found_raises_error_for_all_commands(tmp_path_factory):
         result = runner.invoke(
             cli, ["docs", "build", "--no-view"], catch_exceptions=False
         )
-        assert error_message in result.output   
-    
+        assert error_message in result.output
+
     except:
         raise
     finally:

@@ -2,10 +2,8 @@ import json
 import os
 from collections import OrderedDict
 
-import pytest
-from numpy import Infinity
-
 import great_expectations as ge
+import pytest
 from great_expectations.core import ExpectationSuite
 from great_expectations.data_context.util import file_relative_path
 from great_expectations.datasource import PandasDatasource
@@ -13,6 +11,7 @@ from great_expectations.exceptions import ProfilerError
 from great_expectations.profile.basic_suite_builder_profiler import (
     BasicSuiteBuilderProfiler,
 )
+from numpy import Infinity
 from tests.test_utils import expectationSuiteValidationResultSchema
 
 FALSEY_VALUES = [None, [], False]
@@ -314,7 +313,9 @@ def test_BasicSuiteBuilderProfiler_with_context(filesystem_csv_data_context):
 
     context.create_expectation_suite("default")
     datasource = context.datasources["rad_datasource"]
-    base_dir = datasource.config["batch_kwargs_generators"]["subdir_reader"]["base_directory"]
+    base_dir = datasource.config["batch_kwargs_generators"]["subdir_reader"][
+        "base_directory"
+    ]
     batch_kwargs = {
         "datasource": "rad_datasource",
         "path": os.path.join(base_dir, "f1.csv"),
@@ -590,6 +591,7 @@ def test_BasicSuiteBuilderProfiler_uses_all_columns_if_configuration_does_not_ha
                             [Infinity, Infinity],
                         ],
                     },
+                    "allow_relative_error": False,
                 },
                 "meta": {"BasicSuiteBuilderProfiler": {"confidence": "very low"}},
                 "expectation_type": "expect_column_quantile_values_to_be_between",
@@ -645,6 +647,7 @@ def test_BasicSuiteBuilderProfiler_uses_all_columns_if_configuration_does_not_ha
                             [2.3, 4.3],
                         ],
                     },
+                    "allow_relative_error": False,
                 },
                 "meta": {"BasicSuiteBuilderProfiler": {"confidence": "very low"}},
                 "expectation_type": "expect_column_quantile_values_to_be_between",
@@ -692,6 +695,7 @@ def test_BasicSuiteBuilderProfiler_uses_all_columns_if_configuration_does_not_ha
                             [6.0, 8.0],
                         ],
                     },
+                    "allow_relative_error": False,
                 },
                 "meta": {"BasicSuiteBuilderProfiler": {"confidence": "very low"}},
                 "expectation_type": "expect_column_quantile_values_to_be_between",
@@ -789,6 +793,7 @@ def test_BasicSuiteBuilderProfiler_uses_selected_columns_on_pandas(pandas_datase
                             [6.0, 8.0],
                         ],
                     },
+                    "allow_relative_error": False,
                 },
                 "meta": {"BasicSuiteBuilderProfiler": {"confidence": "very low"}},
                 "expectation_type": "expect_column_quantile_values_to_be_between",
@@ -1064,6 +1069,7 @@ def test_BasicSuiteBuilderProfiler_uses_all_expectations_if_excluded_expectation
                             [Infinity, Infinity],
                         ],
                     },
+                    "allow_relative_error": False,
                 },
                 "expectation_type": "expect_column_quantile_values_to_be_between",
                 "meta": {"BasicSuiteBuilderProfiler": {"confidence": "very low"}},
@@ -1119,6 +1125,7 @@ def test_BasicSuiteBuilderProfiler_uses_all_expectations_if_excluded_expectation
                             [2.3, 4.3],
                         ],
                     },
+                    "allow_relative_error": False,
                 },
                 "expectation_type": "expect_column_quantile_values_to_be_between",
                 "meta": {"BasicSuiteBuilderProfiler": {"confidence": "very low"}},
@@ -1166,6 +1173,7 @@ def test_BasicSuiteBuilderProfiler_uses_all_expectations_if_excluded_expectation
                             [6.0, 8.0],
                         ],
                     },
+                    "allow_relative_error": False,
                 },
                 "expectation_type": "expect_column_quantile_values_to_be_between",
                 "meta": {"BasicSuiteBuilderProfiler": {"confidence": "very low"}},

@@ -1,8 +1,8 @@
 import logging
-import pytest
 
 import great_expectations as ge
 import great_expectations.jupyter_ux as jux
+import pytest
 
 
 def test_styling_elements_exist():
@@ -13,17 +13,20 @@ def test_styling_elements_exist():
     assert ".cooltip" in jux.cooltip_style_element
 
 
-
 def test_display_column_expectations_as_section(basic_expectation_suite):
     html_to_display = jux.display_column_expectations_as_section(
         basic_expectation_suite,
         "naturals",
         include_styling=False,
-        return_without_displaying=True
+        return_without_displaying=True,
     )
     print(html_to_display)
-    html_to_display = html_to_display.replace(" ", "").replace("\t", "").replace("\n", "")
-    assert html_to_display == """\
+    html_to_display = (
+        html_to_display.replace(" ", "").replace("\t", "").replace("\n", "")
+    )
+    assert (
+        html_to_display
+        == """\
 <div id="section-1" class="ge-section container-fluid mb-1 pb-1 pl-sm-3 px-0">
     <div class="row" >
 <div id="content-block-1" class="col-12" >
@@ -44,7 +47,7 @@ def test_display_column_expectations_as_section(basic_expectation_suite):
             </li>
         <li style="list-style-type:none;" >
                 <hr class="mt-1 mb-1" >
-                    
+
                 </hr>
             </li>
         <li >
@@ -60,16 +63,23 @@ def test_display_column_expectations_as_section(basic_expectation_suite):
 </div>
     </div>
 </div>
-""".replace(" ", "").replace("\t", "").replace("\n", "")
+""".replace(
+            " ", ""
+        )
+        .replace("\t", "")
+        .replace("\n", "")
+    )
 
     html_to_display = jux.display_column_expectations_as_section(
-        basic_expectation_suite,
-        "naturals",
-        return_without_displaying=True
+        basic_expectation_suite, "naturals", return_without_displaying=True
     )
     print(html_to_display)
-    html_to_display = html_to_display.replace(" ", "").replace("\t", "").replace("\n", "")
-    assert html_to_display == """\
+    html_to_display = (
+        html_to_display.replace(" ", "").replace("\t", "").replace("\n", "")
+    )
+    assert (
+        html_to_display
+        == """\
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"><style type="text/css">
 .cooltip {
     display:inline-block;
@@ -77,7 +87,7 @@ def test_display_column_expectations_as_section(basic_expectation_suite):
     text-align:left;
 }
 .cooltip .top {
-    min-width:200px; 
+    min-width:200px;
     top:-6px;
     left:50%;
     transform:translate(-50%, -100%);
@@ -151,7 +161,13 @@ def test_display_column_expectations_as_section(basic_expectation_suite):
 </div>
     </div>
 </div>
-""".replace(" ", "").replace("\t", "").replace("\n", "")
+""".replace(
+            " ", ""
+        )
+        .replace("\t", "")
+        .replace("\n", "")
+    )
+
 
 @pytest.mark.smoketest
 def test_display_profiled_column_evrs_as_section(titanic_profiled_evrs_1):
@@ -159,8 +175,9 @@ def test_display_profiled_column_evrs_as_section(titanic_profiled_evrs_1):
         titanic_profiled_evrs_1,
         "SexCode",
         include_styling=False,
-        return_without_displaying=True
+        return_without_displaying=True,
     )
+
 
 @pytest.mark.smoketest
 def test_display_column_evrs_as_section(titanic_profiled_evrs_1):
@@ -168,7 +185,7 @@ def test_display_column_evrs_as_section(titanic_profiled_evrs_1):
         titanic_profiled_evrs_1,
         "SexCode",
         include_styling=False,
-        return_without_displaying=True
+        return_without_displaying=True,
     )
 
 
