@@ -28,7 +28,7 @@ class PipelineDataConnector(DataConnector):
         assets: dict = None,
         config_params: dict = None,
         execution_engine: ExecutionEngine = None,
-        data_context_root_directory:str = None,
+        data_context_root_directory: str = None,
         **kwargs
     ):
         logger.debug(f'Constructing PipelineDataConnector "{name}".')
