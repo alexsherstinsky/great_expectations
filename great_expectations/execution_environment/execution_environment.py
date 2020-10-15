@@ -11,7 +11,6 @@ from great_expectations.data_context.types.base import (
 from great_expectations.data_context.util import instantiate_class_from_config
 from ruamel.yaml.comments import CommentedMap
 from great_expectations.execution_environment.data_connector.data_connector import DataConnector
-from great_expectations.execution_environment.data_connector.pipeline_data_connector import PipelineDataConnector
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
 from great_expectations.core.id_dict import (
     PartitionRequest,
@@ -78,6 +77,8 @@ class ExecutionEnvironment(object):
         runtime_parameters: Union[dict, None] = None,
         repartition: bool = False
     ) -> List[Partition]:
+        if not data_connector_name:
+            raise ge_exceptions.PartitionerError(message="Finding partitions requires a valid data_connector name.")
         data_connector: DataConnector = self.get_data_connector(
             name=data_connector_name
         )
@@ -260,7 +261,7 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
 
         return data_connectors
 
-    def get_available_data_asset_names(self, data_connector_names: list = None) -> dict:
+    def get_available_data_asset_names(self, data_connector_names: list = None, clear_cache: bool = False) -> dict:
         """
         Returns a dictionary of data_asset_names that the specified data
         connector can provide. Note that some data_connectors may not be
@@ -270,6 +271,7 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
 
         Args:
             data_connector_names: the DataConnector for which to get available data asset names.
+            clear_cache: if True, clears the cache in the underlying implementation (False by default for efficiency)
 
         Returns:
             dictionary consisting of sets of data assets available for the specified data connectors:
@@ -292,5 +294,7 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
 
         for data_connector_name in data_connector_names:
             data_connector = self.get_data_connector(name=data_connector_name)
-            available_data_asset_names[data_connector_name] = data_connector.get_available_data_asset_names()
+            available_data_asset_names[data_connector_name] = data_connector.get_available_data_asset_names(
+                repartition=clear_cache
+            )
         return available_data_asset_names

@@ -24,7 +24,6 @@ from great_expectations.core.id_dict import (
     PartitionDefinition,
     BatchSpec
 )
-from great_expectations.core.util import nested_update
 from great_expectations.data_context.util import instantiate_class_from_config
 import great_expectations.exceptions as ge_exceptions
 
@@ -333,7 +332,7 @@ connector and the default_partitioner set to one of the configured partitioners.
     ) -> BatchSpec:
         raise NotImplementedError
 
-    def get_available_data_asset_names(self) -> List[str]:
+    def get_available_data_asset_names(self, repartition: bool = False) -> List[str]:
         """Return the list of asset names known by this data connector.
 
         Returns:
@@ -354,7 +353,7 @@ connector and the default_partitioner set to one of the configured partitioners.
                 "limit": None,
             },
             runtime_parameters=None,
-            repartition=False
+            repartition=repartition
         )
         if available_partitions and len(available_partitions) > 0:
             for partition in available_partitions:
