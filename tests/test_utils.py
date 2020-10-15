@@ -1668,8 +1668,8 @@ def execution_environment_files_data_connector_regex_partitioner_config(
                             "class_name": "PipelinePartitioner",
                             "allow_multipart_partitions": False,
                             "runtime_keys": [
-                                "custom_key_0",
                                 "run_id",
+                                "custom_key_0",
                             ]
                         }
                     },
@@ -1700,8 +1700,8 @@ def execution_environment_files_data_connector_regex_partitioner_config(
                             "allow_multipart_partitions": False,
                             "sorters": sorters,
                             "runtime_keys": [
-                                "custom_key_0",
                                 "run_id",
+                                "custom_key_0",
                             ]
                         }
                     },

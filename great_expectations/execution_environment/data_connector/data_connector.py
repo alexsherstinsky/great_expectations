@@ -11,7 +11,6 @@ from great_expectations.data_context.types.base import (
     PartitionerConfig,
     partitionerConfigSchema
 )
-from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import (
@@ -24,7 +23,6 @@ from great_expectations.core.id_dict import (
     PartitionDefinition,
     BatchSpec
 )
-from great_expectations.core.util import nested_update
 from great_expectations.data_context.util import instantiate_class_from_config
 import great_expectations.exceptions as ge_exceptions
 
@@ -63,7 +61,6 @@ class DataConnector(object):
         default_partitioner: str = None,
         assets: dict = None,
         config_params: dict = None,
-        execution_engine: ExecutionEngine = None,
         data_context_root_directory: str = None,
         **kwargs
     ):
@@ -79,7 +76,6 @@ class DataConnector(object):
         # The partitions cache is a dictionary, which maintains lists of partitions for a data_asset_name as the key.
         self._partitions_cache: dict = {}
 
-        self._execution_engine = execution_engine
         self._data_context_root_directory = data_context_root_directory
 
     @property
@@ -333,7 +329,7 @@ connector and the default_partitioner set to one of the configured partitioners.
     ) -> BatchSpec:
         raise NotImplementedError
 
-    def get_available_data_asset_names(self) -> List[str]:
+    def get_available_data_asset_names(self, repartition: bool = False) -> List[str]:
         """Return the list of asset names known by this data connector.
 
         Returns:
@@ -354,7 +350,7 @@ connector and the default_partitioner set to one of the configured partitioners.
                 "limit": None,
             },
             runtime_parameters=None,
-            repartition=False
+            repartition=repartition
         )
         if available_partitions and len(available_partitions) > 0:
             for partition in available_partitions:

@@ -4,7 +4,6 @@ from typing import List, Union, Any
 
 import logging
 
-from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import PartitionQuery
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
@@ -44,7 +43,6 @@ class FilesDataConnector(DataConnector):
         known_extensions: list = None,
         reader_options: dict = None,
         reader_method: str = None,
-        execution_engine: ExecutionEngine = None,
         data_context_root_directory: str = None,
         **kwargs
     ):
@@ -55,7 +53,6 @@ class FilesDataConnector(DataConnector):
             default_partitioner=default_partitioner,
             assets=assets,
             config_params=config_params,
-            execution_engine=execution_engine,
             data_context_root_directory=data_context_root_directory,
             **kwargs
         )
@@ -69,7 +66,8 @@ class FilesDataConnector(DataConnector):
         self._reader_options = reader_options
 
         self._reader_method = reader_method
-        self._base_directory = self.config_params["base_directory"]
+
+        self._base_directory = self._normalize_directory_path(dir_path=self.config_params["base_directory"])
 
     @property
     def reader_options(self):
@@ -85,7 +83,7 @@ class FilesDataConnector(DataConnector):
 
     @property
     def base_directory(self):
-        return self._normalize_directory_path(dir_path=self._base_directory)
+        return self._base_directory
 
     def _get_available_partitions(
         self,
@@ -109,9 +107,11 @@ class FilesDataConnector(DataConnector):
             auto_discover_assets=auto_discover_assets
         )
 
-    def _normalize_directory_path(self, dir_path: str) -> str:
+    def _normalize_directory_path(self, dir_path: str) -> Union[str, None]:
         # If directory is a relative path, interpret it as relative to the data context's
         # context root directory (parent directory of great_expectation dir)
+        if not dir_path:
+            return None
         if Path(dir_path).is_absolute() or self._data_context_root_directory is None:
             return dir_path
         else:
@@ -152,14 +152,15 @@ class FilesDataConnector(DataConnector):
             and self.assets[data_asset_name].get("config_params")
             and self.assets[data_asset_name]["config_params"]
         ):
-            base_directory = self._normalize_directory_path(
-                dir_path=self.assets[data_asset_name]["config_params"].get("base_directory", self.base_directory)
-            )
+            data_asset_base_directory: str = self.assets[data_asset_name]["config_params"].get("base_directory")
+            if not data_asset_base_directory:
+                data_asset_base_directory = self.base_directory
+            data_asset_base_directory = self._normalize_directory_path(dir_path=data_asset_base_directory)
             glob_directive = self.assets[data_asset_name]["config_params"].get("glob_directive")
         else:
-            base_directory = self.base_directory
+            data_asset_base_directory = self.base_directory
             glob_directive = self.config_params.get("glob_directive")
-        return {"base_directory": base_directory, "glob_directive": glob_directive}
+        return {"base_directory": data_asset_base_directory, "glob_directive": glob_directive}
 
     @staticmethod
     def _verify_file_paths(path_list: list) -> list:
