@@ -1,3 +1,4 @@
+# TODO: <Alex>ALEX</Alex>
 from pathlib import Path
 import itertools
 from typing import List, Union, Any
@@ -13,13 +14,18 @@ from great_expectations.core.id_dict import (
     PartitionDefinitionSubset,
     BatchSpec
 )
+# TODO: <Alex></Alex>
+from great_expectations.core.batch import (
+    BatchMarkers,
+    BatchDefinition,
+)
 from great_expectations.execution_environment.types import PathBatchSpec
 import great_expectations.exceptions as ge_exceptions
 
 logger = logging.getLogger(__name__)
 
 
-KNOWN_EXTENSIONS = [
+KNOWN_FILE_EXTENSIONS: List[str] = [
     ".csv",
     ".tsv",
     ".parquet",
@@ -36,11 +42,13 @@ class FilesDataConnector(DataConnector):
     def __init__(
         self,
         name: str,
+        base_directory: str,
+        glob_directive: str,
         partitioners: dict = None,
         default_partitioner: str = None,
         assets: dict = None,
-        config_params: dict = None,
-        known_extensions: list = None,
+        execution_engine: ExecutionEngine = None,
+        known_extensions: List[str] = None,
         reader_options: dict = None,
         reader_method: str = None,
         data_context_root_directory: str = None,
@@ -52,13 +60,15 @@ class FilesDataConnector(DataConnector):
             partitioners=partitioners,
             default_partitioner=default_partitioner,
             assets=assets,
-            config_params=config_params,
+            execution_engine=execution_engine,
             data_context_root_directory=data_context_root_directory,
             **kwargs
         )
 
+        self._base_directory = base_directory
+        self._glob_directive = glob_directive
         if known_extensions is None:
-            known_extensions = KNOWN_EXTENSIONS
+            known_extensions = KNOWN_FILE_EXTENSIONS
         self._known_extensions = known_extensions
 
         if reader_options is None:
@@ -66,24 +76,37 @@ class FilesDataConnector(DataConnector):
         self._reader_options = reader_options
 
         self._reader_method = reader_method
+        # TODO: <Alex></Alex>
+        # <<<<<<< HEAD
 
-        self._base_directory = self._normalize_directory_path(dir_path=self.config_params["base_directory"])
+        # TODO: <Alex></Alex>
+        # from great_expectations.execution_engine import ExecutionEngine
+        # self._base_directory = self._normalize_directory_path(dir_path=self.config_params["base_directory"])
+        # TODO: <Alex></Alex>
+        # from great_expectations.execution_engine import ExecutionEngine
+        # =======
+        # self._base_directory = base_directory
+        # self._glob_directive = glob_directive
+        # >>>>>>> refactor/reimplement_batch_definition
 
-    @property
-    def reader_options(self):
-        return self._reader_options
-
-    @property
-    def reader_method(self):
-        return self._reader_method
-
-    @property
-    def known_extensions(self):
-        return self._known_extensions
-
-    @property
-    def base_directory(self):
-        return self._base_directory
+    # TODO: <Alex></Alex>
+    # from great_expectations.execution_engine import ExecutionEngine
+    # @property
+    # def base_directory(self) -> str:
+    #     return self._base_directory
+    #
+    # @property
+    # def glob_directive(self) -> str:
+    #     return self._glob_directive
+    #
+    # @property
+    # def reader_method(self) -> str:
+    #     return self._reader_method
+    #
+    # @property
+    # def known_extensions(self) -> List[str]:
+    #     return self._known_extensions
+    # TODO: <Alex></Alex>
 
     def _get_available_partitions(
         self,
@@ -126,8 +149,8 @@ class FilesDataConnector(DataConnector):
         glob_directive: str
 
         data_asset_directives: dict = self._get_data_asset_directives(data_asset_name=data_asset_name)
-        base_directory = data_asset_directives["base_directory"]
-        glob_directive = data_asset_directives["glob_directive"]
+        base_directory: str = data_asset_directives["base_directory"]
+        glob_directive: str = data_asset_directives["glob_directive"]
 
         if Path(base_directory).is_dir():
             path_list: list
@@ -139,6 +162,8 @@ class FilesDataConnector(DataConnector):
                 path_list = [
                     str(posix_path) for posix_path in self._get_valid_file_paths(base_directory=base_directory)
                 ]
+
+            print(path_list)
             return self._verify_file_paths(path_list=path_list)
         raise ge_exceptions.DataConnectorError(f'Expected a directory, but path "{base_directory}" is not a directory.')
 
@@ -154,13 +179,19 @@ class FilesDataConnector(DataConnector):
         ):
             data_asset_base_directory: str = self.assets[data_asset_name]["config_params"].get("base_directory")
             if not data_asset_base_directory:
-                data_asset_base_directory = self.base_directory
+                data_asset_base_directory = self._base_directory
             data_asset_base_directory = self._normalize_directory_path(dir_path=data_asset_base_directory)
             glob_directive = self.assets[data_asset_name]["config_params"].get("glob_directive")
         else:
-            data_asset_base_directory = self.base_directory
-            glob_directive = self.config_params.get("glob_directive")
+            # <<<<<<< HEAD
+            data_asset_base_directory = self._base_directory
+            glob_directive = self._glob_directive
         return {"base_directory": data_asset_base_directory, "glob_directive": glob_directive}
+        # =======
+        # base_directory = self.base_directory
+        # glob_directive = self._glob_directive
+        # return {"base_directory": base_directory, "glob_directive": glob_directive}
+        # >>>>>>> refactor/reimplement_batch_definition
 
     @staticmethod
     def _verify_file_paths(path_list: list) -> list:
@@ -174,10 +205,10 @@ class FilesDataConnector(DataConnector):
 
     def _get_valid_file_paths(self, base_directory: str = None) -> list:
         if base_directory is None:
-            base_directory = self.base_directory
+            base_directory = self._base_directory
         path_list: list = list(Path(base_directory).iterdir())
         for path in path_list:
-            for extension in self.known_extensions:
+            for extension in self._known_extensions:
                 if path.endswith(extension) and not path.startswith("."):
                     path_list.append(path)
                 elif Path(path).is_dir:
@@ -215,3 +246,26 @@ class FilesDataConnector(DataConnector):
             path: str = str(partition.data_reference)
             batch_spec["path"] = path
         return PathBatchSpec(batch_spec)
+
+    def _generate_batch_spec_parameters_from_batch_definition(
+        self,
+        batch_definition: BatchDefinition
+    ) -> dict:
+    
+        #TODO Abe 20201018: This is an absolutely horrible way to get a path from a single partition_definition, but AFIACT it's the only method currently supported by our Partitioner
+        available_partitions = self.get_available_partitions(
+            data_asset_name=batch_definition.data_asset_name,
+        )
+        for partition in available_partitions:
+            if partition.definition == batch_definition.partition_definition:
+                path = partition.data_reference
+                continue
+        # TODO: <Alex>Bad practice.</Alex>
+        try:
+            path
+        except UnboundLocalError:
+            raise ValueError(f"No partition in {available_partitions} matches the given partition definition {batch_definition.partition_definition} from batch definition {batch_definition}")
+
+        return {
+            "path": path
+        }

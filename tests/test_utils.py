@@ -5,8 +5,9 @@ import os
 import random
 import string
 from functools import wraps
-from types import ModuleType
-from typing import Union
+# TODO: <Alex></Alex>
+# from types import ModuleType
+from typing import Union, List, Callable
 
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ import pytest
 from dateutil.parser import parse
 
 from great_expectations.core import (
+    # TODO: <Alex></Alex>
     ExpectationConfiguration,
     ExpectationConfigurationSchema,
     ExpectationSuite,
@@ -21,6 +23,7 @@ from great_expectations.core import (
     ExpectationSuiteValidationResultSchema,
     ExpectationValidationResultSchema,
 )
+# TODO: <Alex></Alex>
 from great_expectations.core.batch import Batch
 from great_expectations.dataset import PandasDataset, SparkDFDataset, SqlAlchemyDataset
 from great_expectations.dataset.util import (
@@ -1602,6 +1605,7 @@ def safe_remove(path):
             print(e)
 
 
+# TODO: <Alex>ALEX</Alex>
 def execution_environment_files_data_connector_regex_partitioner_config(
     use_group_names: bool = False,
     use_sorters: bool = False,
@@ -1683,10 +1687,8 @@ def execution_environment_files_data_connector_regex_partitioner_config(
                 "test_filesystem_data_connector": {
                     "module_name": "great_expectations.execution_environment.data_connector",
                     "class_name": "FilesDataConnector",
-                    "config_params": {
-                        "base_directory": default_base_directory,
-                        "glob_directive": "*",
-                    },
+                    "base_directory": default_base_directory,
+                    "glob_directive": "*",
                     "partitioners": {
                         "test_regex_partitioner": {
                             "module_name": "great_expectations.execution_environment.data_connector.partitioner",
@@ -1709,10 +1711,8 @@ def execution_environment_files_data_connector_regex_partitioner_config(
                     "assets": {
                         "test_asset_0": {
                             "partitioner": "test_regex_partitioner",
-                            "config_params": {
                                 "base_directory": data_asset_base_directory,
                                 "glob_directive": "alex*",
-                            }
                         }
                     }
                 }
@@ -1758,3 +1758,32 @@ def create_files_for_regex_partitioner(
                 with open(file_path, "w") as fp:
                     fp.writelines([f'The name of this file is: "{file_path}".\n'])
             base_directories.append(base_dir)
+
+
+# TODO: <Alex>ALEX</Alex>
+def create_files_in_directory(
+    directory: str,
+    file_name_list: List[str],
+    file_content_fn: Callable = lambda: "x,y\n1,2\n2,3"
+):
+    subdirectories = []
+    for file_name in file_name_list:
+        splits = file_name.split("/")
+        for i in range(1, len(splits)):
+            subdirectories.append(
+                os.path.join(*splits[:i])
+            )
+    subdirectories = set(subdirectories)
+
+    for subdirectory in subdirectories:
+        os.makedirs(
+            os.path.join(directory, subdirectory),
+            exist_ok=True
+        )
+    
+    for file_name in file_name_list:
+        file_path = os.path.join(directory, file_name)
+        with open(file_path, "w") as f_:
+            f_.write(
+                file_content_fn()
+            )

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# TODO: <Alex>ALEX</Alex>
 import copy
 import itertools
-from typing import List, Dict, Union, Callable, Any
+from typing import List, Dict, Union, Callable, Any, Tuple
 from ruamel.yaml.comments import CommentedMap
 
 import logging
@@ -11,6 +12,7 @@ from great_expectations.data_context.types.base import (
     PartitionerConfig,
     partitionerConfigSchema
 )
+from great_expectations.execution_engine.execution_engine import ExecutionEngine
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import (
@@ -21,7 +23,11 @@ from great_expectations.core.batch import BatchRequest
 from great_expectations.core.id_dict import (
     PartitionDefinitionSubset,
     PartitionDefinition,
-    BatchSpec
+    BatchSpec,
+)
+from great_expectations.core.batch import (
+    BatchMarkers,
+    BatchDefinition,
 )
 from great_expectations.data_context.util import instantiate_class_from_config
 import great_expectations.exceptions as ge_exceptions
@@ -60,23 +66,23 @@ class DataConnector(object):
         partitioners: dict = None,
         default_partitioner: str = None,
         assets: dict = None,
-        config_params: dict = None,
+        execution_engine: ExecutionEngine = None,
         data_context_root_directory: str = None,
         **kwargs
     ):
         self._name = name
-
-        self._partitioners = partitioners or {}
+        if partitioners is None:
+            partitioners = {}
+        self._partitioners = partitioners
         self._default_partitioner = default_partitioner
         self._assets = assets
-        self._config_params = config_params
+        self._execution_engine = execution_engine
+        self._data_context_root_directory = data_context_root_directory
 
         self._partitioners_cache: dict = {}
 
         # The partitions cache is a dictionary, which maintains lists of partitions for a data_asset_name as the key.
         self._partitions_cache: dict = {}
-
-        self._data_context_root_directory = data_context_root_directory
 
     @property
     def name(self) -> str:
@@ -93,10 +99,6 @@ class DataConnector(object):
     @property
     def assets(self) -> dict:
         return self._assets
-
-    @property
-    def config_params(self) -> dict:
-        return self._config_params
 
     def _get_cached_partitions(
         self,
@@ -301,33 +303,33 @@ connector and the default_partitioner set to one of the configured partitioners.
             partitioner = self.get_partitioner(name=partitioner_name)
         return partitioner
 
-    def _build_batch_spec(self, batch_request: BatchRequest, partition: Partition) -> BatchSpec:
-        if not batch_request.data_asset_name:
-            raise ge_exceptions.BatchSpecError("Batch request must have a data_asset_name.")
+    # def _build_batch_spec(self, batch_request: BatchRequest, partition: Partition) -> BatchSpec:
+    #     if not batch_request.data_asset_name:
+    #         raise ge_exceptions.BatchSpecError("Batch request must have a data_asset_name.")
 
-        batch_spec_scaffold: BatchSpec
-        batch_spec_passthrough: BatchSpec = batch_request.batch_spec_passthrough
-        if batch_spec_passthrough is None:
-            batch_spec_scaffold = BatchSpec()
-        else:
-            batch_spec_scaffold = copy.deepcopy(batch_spec_passthrough)
+    #     batch_spec_scaffold: BatchSpec
+    #     batch_spec_passthrough: BatchSpec = batch_request.batch_spec_passthrough
+    #     if batch_spec_passthrough is None:
+    #         batch_spec_scaffold = BatchSpec()
+    #     else:
+    #         batch_spec_scaffold = copy.deepcopy(batch_spec_passthrough)
 
-        data_asset_name: str = batch_request.data_asset_name
-        batch_spec_scaffold["data_asset_name"] = data_asset_name
+    #     data_asset_name: str = batch_request.data_asset_name
+    #     batch_spec_scaffold["data_asset_name"] = data_asset_name
 
-        batch_spec: BatchSpec = self._build_batch_spec_from_partition(
-            partition=partition, batch_request=batch_request, batch_spec=batch_spec_scaffold
-        )
+    #     batch_spec: BatchSpec = self._build_batch_spec_from_partition(
+    #         partition=partition, batch_request=batch_request, batch_spec=batch_spec_scaffold
+    #     )
 
-        return batch_spec
+    #     return batch_spec
 
-    def _build_batch_spec_from_partition(
-        self,
-        partition: Partition,
-        batch_request: BatchRequest,
-        batch_spec: BatchSpec
-    ) -> BatchSpec:
-        raise NotImplementedError
+    # def _build_batch_spec_from_partition(
+    #     self,
+    #     partition: Partition,
+    #     batch_request: BatchRequest,
+    #     batch_spec: BatchSpec
+    # ) -> BatchSpec:
+    #     raise NotImplementedError
 
     def get_available_data_asset_names(self, repartition: bool = False) -> List[str]:
         """Return the list of asset names known by this data connector.
@@ -391,3 +393,79 @@ connector and the default_partitioner set to one of the configured partitioners.
         repartition: bool = False
     ) -> List[Partition]:
         raise NotImplementedError
+
+    def get_batch_definition_list_from_batch_request(
+        self,
+        batch_request: BatchRequest,
+    ) -> List[BatchDefinition]:
+        # TODO: <Alex></Alex>
+        ###Abe 20201014: Should we verify that BatchRequest.data_connector_name == self._name?
+        # TODO: <Alex></Alex>
+        partition_definition_list: List[PartitionDefinition] = self._generate_partition_definition_list_from_batch_request(batch_request)
+        batches = []
+        for partition_definition in partition_definition_list:
+            batches.append(BatchDefinition(
+                execution_environment_name=batch_request.execution_environment_name,
+                data_connector_name=self._name,
+                data_asset_name=batch_request.data_asset_name,
+                partition_definition=partition_definition,
+            ))
+
+        return batches
+
+    def get_batch_data_and_metadata_from_batch_definition(
+        self,
+        batch_definition: BatchDefinition,
+    ) -> Tuple[
+        Any,  # batch_data
+        BatchSpec,
+        BatchMarkers,
+    ]:
+        batch_spec: BatchSpec = self._build_batch_spec_from_batch_definition(batch_definition)
+        batch_data: Any
+        batch_markers: BatchMarkers
+        batch_data, batch_markers = self._execution_engine.get_batch_data_and_markers(**batch_spec)
+        return (
+            batch_data,
+            batch_spec,
+            batch_markers,
+        )
+
+    def _build_batch_spec_from_batch_definition(
+        self,
+        batch_definition: BatchDefinition
+    ) -> BatchSpec:
+        batch_spec_params = self._generate_batch_spec_parameters_from_batch_definition(
+            batch_definition
+        )
+
+        # TODO Abe 20201018: Reincorporate info from the execution_engine.
+        # Note: This might not be necessary now that we're encoding that info as default params on get_batch_data_and_markers
+        # batch_spec = self._execution_engine.process_batch_request(
+        #     batch_request=batch_request,
+        #     batch_spec=batch_spec
+        # )
+
+        # TODO Abe 20201018: Decide if we want to allow batch_spec_passthrough parameters anywhere.
+
+        batch_spec = BatchSpec(
+            **batch_spec_params
+        )
+
+        return batch_spec
+
+    def _generate_batch_spec_parameters_from_batch_definition(
+        self,
+        batch_definition: BatchDefinition
+    ) -> dict:
+        raise NotImplementedError
+
+    def _generate_partition_definition_list_from_batch_request(
+        self,
+        batch_request: BatchRequest
+    ) -> List[PartitionDefinition]:
+        available_partitions = self.get_available_partitions(
+            data_asset_name=batch_request.data_asset_name,
+            ### Need to pass data connector
+        )
+        return [partition.definition for partition in available_partitions]
