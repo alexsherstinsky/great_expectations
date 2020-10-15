@@ -4,7 +4,6 @@ from typing import List, Union, Any
 
 import logging
 
-from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import PartitionQuery
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
@@ -44,7 +43,6 @@ class FilesDataConnector(DataConnector):
         known_extensions: list = None,
         reader_options: dict = None,
         reader_method: str = None,
-        execution_engine: ExecutionEngine = None,
         data_context_root_directory: str = None,
         **kwargs
     ):
@@ -55,7 +53,6 @@ class FilesDataConnector(DataConnector):
             default_partitioner=default_partitioner,
             assets=assets,
             config_params=config_params,
-            execution_engine=execution_engine,
             data_context_root_directory=data_context_root_directory,
             **kwargs
         )

@@ -11,7 +11,6 @@ from great_expectations.data_context.types.base import (
     PartitionerConfig,
     partitionerConfigSchema
 )
-from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import (
@@ -62,7 +61,6 @@ class DataConnector(object):
         default_partitioner: str = None,
         assets: dict = None,
         config_params: dict = None,
-        execution_engine: ExecutionEngine = None,
         data_context_root_directory: str = None,
         **kwargs
     ):
@@ -78,7 +76,6 @@ class DataConnector(object):
         # The partitions cache is a dictionary, which maintains lists of partitions for a data_asset_name as the key.
         self._partitions_cache: dict = {}
 
-        self._execution_engine = execution_engine
         self._data_context_root_directory = data_context_root_directory
 
     @property
