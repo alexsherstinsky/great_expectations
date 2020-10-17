@@ -1,5 +1,6 @@
 import regex as re
 from typing import List, Union
+import copy
 from pathlib import Path
 
 import logging
@@ -23,7 +24,6 @@ class RegexPartitioner(Partitioner):
         sorters: list = None,
         allow_multipart_partitions: bool = False,
         runtime_keys: list = None,
-        config_params: dict = None,
         **kwargs
     ):
         logger.debug(f'Constructing RegexPartitioner "{name}".')
@@ -33,28 +33,34 @@ class RegexPartitioner(Partitioner):
             sorters=sorters,
             allow_multipart_partitions=allow_multipart_partitions,
             runtime_keys=runtime_keys,
-            config_params=config_params,
             **kwargs
         )
 
-        self._regex = self._process_regex_config()
+        regex_config: Union[dict, None]
+        try:
+            regex_config = getattr(self, "regex")
+        except AttributeError:
+            regex_config = None
+        self.regex = self._process_regex_config(regex_config=regex_config)
 
-    def _process_regex_config(self) -> dict:
+    def _process_regex_config(self, regex_config: dict) -> dict:
         regex: Union[dict, None]
-        if self.config_params:
-            regex = self.config_params.get("regex")
+        if regex_config:
             # check if dictionary
-            if not isinstance(regex, dict):
+            if not isinstance(regex_config, dict):
                 raise ge_exceptions.PartitionerError(
-                    f'''RegexPartitioner "{self.name}" requires a regex pattern configured as a dictionary. 
-                    It is currently of type "{type(regex)}. Please check your configuration.''')
+                    f'''RegexPartitioner "{self.name}" requires a regex pattern configured as a dictionary.  It is
+currently of type "{type(regex_config)}. Please check your configuration.
+                    '''
+                )
             # check if correct key exists
-            if not ("pattern" in regex.keys()):
+            if not ("pattern" in regex_config.keys()):
                 raise ge_exceptions.PartitionerError(
                     f'''RegexPartitioner "{self.name}" requires a regex pattern to be specified in its configuration.
                     ''')
+            regex = copy.deepcopy(regex_config)
             # check if group_names exists in regex config, if not add empty list
-            if not ("group_names" in regex.keys() and isinstance(regex["group_names"], list)):
+            if not ("group_names" in regex_config.keys() and isinstance(regex_config["group_names"], list)):
                 regex["group_names"] = []
         else:
             # if no configuration exists at all, set defaults
@@ -65,10 +71,6 @@ class RegexPartitioner(Partitioner):
                 ]
             }
         return regex
-
-    @property
-    def regex(self) -> dict:
-        return self._regex
 
     def _compute_partitions_for_data_asset(
         self,

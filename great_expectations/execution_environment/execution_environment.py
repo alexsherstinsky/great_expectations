@@ -180,8 +180,8 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
             None
         """
         if "data_connectors" in self._execution_environment_config:
-            for data_connector in self._execution_environment_config["data_connectors"].keys():
-                self.get_data_connector(name=data_connector)
+            for data_connector_name in self._execution_environment_config["data_connectors"].keys():
+                self.get_data_connector(name=data_connector_name)
 
     # TODO Abe 10/6/2020: Should this be an internal method?
     def get_data_connector(self, name: str) -> DataConnector:
@@ -189,7 +189,6 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
 
         Args:
             name (str): name of DataConnector
-            runtime_environment (dict):
 
         Returns:
             DataConnector (DataConnector)
@@ -208,9 +207,10 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
             raise ge_exceptions.DataConnectorError(
                 f'Unable to load data connector "{name}" -- no configuration found or invalid configuration.'
             )
-        data_connector_config: CommentedMap = dataConnectorConfigSchema.load(
-            data_connector_config
-        )
+        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
+        # data_connector_config: CommentedMap = dataConnectorConfigSchema.load(
+        #     data_connector_config
+        # )
         data_connector: DataConnector = self._build_data_connector_from_config(
             name=name, config=data_connector_config
         )

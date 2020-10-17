@@ -304,6 +304,12 @@ class DataConnectorError(DataContextError):
         super().__init__(self.message)
 
 
+class AssetError(DataContextError):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
 class PartitionerError(DataContextError):
     def __init__(self, message):
         self.message = message

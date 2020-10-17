@@ -18,7 +18,6 @@ class PipelinePartitioner(Partitioner):
         sorters: list = None,
         allow_multipart_partitions: bool = False,
         runtime_keys: list = None,
-        config_params: dict = None,
         **kwargs
     ):
         logger.debug(f'Constructing PipelinePartitioner "{name}".')
@@ -28,7 +27,6 @@ class PipelinePartitioner(Partitioner):
             sorters=sorters,
             allow_multipart_partitions=allow_multipart_partitions,
             runtime_keys=runtime_keys,
-            config_params=config_params,
             **kwargs
         )
 

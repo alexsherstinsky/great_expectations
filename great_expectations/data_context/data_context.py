@@ -1321,7 +1321,8 @@ class BaseDataContext:
         else:
             config = kwargs
 
-        config = executionEnvironmentConfigSchema.load(config)
+        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
+        # config = executionEnvironmentConfigSchema.load(config)
         self._project_config["execution_environments"][name] = config
 
         # We perform variable substitution in the execution_environment's config here before using the config
@@ -1330,9 +1331,11 @@ class BaseDataContext:
         if initialize:
             execution_environment = self._build_execution_environment_from_config(
                 name,
-                self._project_config_with_variables_substituted.execution_environments[
-                    name
-                ],
+                # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
+                # self._project_config_with_variables_substituted.execution_environments[
+                #     name
+                # ],
+                config
             )
             self._cached_execution_environments[name] = execution_environment
         else:

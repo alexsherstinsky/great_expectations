@@ -4,6 +4,7 @@ from typing import List, Union, Any
 
 import logging
 
+from great_expectations.execution_environment.data_connector.asset.asset import Asset
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import PartitionQuery
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
@@ -19,7 +20,7 @@ import great_expectations.exceptions as ge_exceptions
 logger = logging.getLogger(__name__)
 
 
-KNOWN_EXTENSIONS = [
+KNOWN_EXTENSIONS: List[str] = [
     ".csv",
     ".tsv",
     ".parquet",
@@ -39,8 +40,9 @@ class FilesDataConnector(DataConnector):
         partitioners: dict = None,
         default_partitioner: str = None,
         assets: dict = None,
-        config_params: dict = None,
-        known_extensions: list = None,
+        base_directory: str = None,
+        glob_directive: str = None,
+        known_extensions: List[str] = None,
         reader_options: dict = None,
         reader_method: str = None,
         data_context_root_directory: str = None,
@@ -52,10 +54,13 @@ class FilesDataConnector(DataConnector):
             partitioners=partitioners,
             default_partitioner=default_partitioner,
             assets=assets,
-            config_params=config_params,
             data_context_root_directory=data_context_root_directory,
             **kwargs
         )
+
+        self._base_directory = self._normalize_directory_path(dir_path=base_directory)
+
+        self._glob_directive = glob_directive
 
         if known_extensions is None:
             known_extensions = KNOWN_EXTENSIONS
@@ -67,23 +72,25 @@ class FilesDataConnector(DataConnector):
 
         self._reader_method = reader_method
 
-        self._base_directory = self._normalize_directory_path(dir_path=self.config_params["base_directory"])
+    @property
+    def base_directory(self) -> str:
+        return str(self._base_directory)
 
     @property
-    def reader_options(self):
+    def glob_directive(self) -> str:
+        return self._glob_directive
+
+    @property
+    def reader_options(self) -> dict:
         return self._reader_options
 
     @property
-    def reader_method(self):
+    def reader_method(self) -> str:
         return self._reader_method
 
     @property
-    def known_extensions(self):
+    def known_extensions(self) -> List[str]:
         return self._known_extensions
-
-    @property
-    def base_directory(self):
-        return self._base_directory
 
     def _get_available_partitions(
         self,
@@ -110,7 +117,7 @@ class FilesDataConnector(DataConnector):
     def _normalize_directory_path(self, dir_path: str) -> Union[str, None]:
         # If directory is a relative path, interpret it as relative to the data context's
         # context root directory (parent directory of great_expectation dir)
-        if not dir_path:
+        if not (dir_path and isinstance(dir_path, str)):
             return None
         if Path(dir_path).is_absolute() or self._data_context_root_directory is None:
             return dir_path
@@ -144,22 +151,22 @@ class FilesDataConnector(DataConnector):
 
     def _get_data_asset_directives(self, data_asset_name: str = None) -> dict:
         glob_directive: str
-        base_directory: str
+        # base_directory: str
+        data_asset_base_directory: str
         if (
             data_asset_name
             and self.assets
             and self.assets.get(data_asset_name)
-            and self.assets[data_asset_name].get("config_params")
-            and self.assets[data_asset_name]["config_params"]
         ):
-            data_asset_base_directory: str = self.assets[data_asset_name]["config_params"].get("base_directory")
+            asset: Asset = self.get_asset(name=data_asset_name)
+            data_asset_base_directory = getattr(asset, "base_directory")
             if not data_asset_base_directory:
                 data_asset_base_directory = self.base_directory
             data_asset_base_directory = self._normalize_directory_path(dir_path=data_asset_base_directory)
-            glob_directive = self.assets[data_asset_name]["config_params"].get("glob_directive")
+            glob_directive: str = getattr(asset, "glob_directive")
         else:
             data_asset_base_directory = self.base_directory
-            glob_directive = self.config_params.get("glob_directive")
+            glob_directive = self.glob_directive
         return {"base_directory": data_asset_base_directory, "glob_directive": glob_directive}
 
     @staticmethod

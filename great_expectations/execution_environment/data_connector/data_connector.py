@@ -8,9 +8,12 @@ from ruamel.yaml.comments import CommentedMap
 import logging
 
 from great_expectations.data_context.types.base import (
+    AssetConfig,
+    assetConfigSchema,
     PartitionerConfig,
     partitionerConfigSchema
 )
+from great_expectations.execution_environment.data_connector.asset.asset import Asset
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import (
@@ -57,30 +60,36 @@ class DataConnector(object):
     def __init__(
         self,
         name: str,
+        assets: dict = None,
         partitioners: dict = None,
         default_partitioner: str = None,
-        assets: dict = None,
-        config_params: dict = None,
         data_context_root_directory: str = None,
         **kwargs
     ):
         self._name = name
-
-        self._partitioners = partitioners or {}
-        self._default_partitioner = default_partitioner
+        if assets is None:
+            assets = {}
         self._assets = assets
-        self._config_params = config_params
+        if partitioners is None:
+            partitioners = {}
+        self._partitioners = partitioners
+        self._default_partitioner = default_partitioner
+        self._data_context_root_directory = data_context_root_directory
+
+        self._assets_cache: dict = {}
 
         self._partitioners_cache: dict = {}
 
         # The partitions cache is a dictionary, which maintains lists of partitions for a data_asset_name as the key.
         self._partitions_cache: dict = {}
 
-        self._data_context_root_directory = data_context_root_directory
-
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def assets(self) -> dict:
+        return self._assets
 
     @property
     def partitioners(self) -> dict:
@@ -90,13 +99,119 @@ class DataConnector(object):
     def default_partitioner(self) -> str:
         return self._default_partitioner
 
-    @property
-    def assets(self) -> dict:
-        return self._assets
+    def get_asset(self, name) -> Asset:
+        """Get the (named) Asset from a DataConnector)
 
-    @property
-    def config_params(self) -> dict:
-        return self._config_params
+        Args:
+            name (str): name of Asset
+
+        Returns:
+            Asset (Asset)
+        """
+        if name in self._assets_cache:
+            return self._assets_cache[name]
+        else:
+            if self._assets:
+                if name in self._assets.keys():
+                    asset_config: dict = copy.deepcopy(
+                        self._assets[name]
+                    )
+                else:
+                    raise ge_exceptions.AssetError(
+                        f'''Unable to load asset with the name "{name}" -- no configuration found or invalid
+configuration.
+                        '''
+                    )
+            else:
+                raise ge_exceptions.AssetError(
+                    f'Unable to load asset with the name "{name}" -- no configuration found or invalid configuration.'
+                )
+        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
+        # asset_config: CommentedMap = assetConfigSchema.load(
+        #     asset_config
+        # )
+        asset: Asset = self._build_asset_from_config(
+            name=name, config=asset_config
+        )
+        self._assets_cache[name] = asset
+        return asset
+
+    @staticmethod
+    def _build_asset_from_config(name: str, config: CommentedMap) -> Asset:
+        """Build an Asset using the provided configuration and return the newly-built Asset."""
+        # We convert from the type back to a dictionary for purposes of instantiation
+        if isinstance(config, AssetConfig):
+            config: dict = assetConfigSchema.dump(config)
+        runtime_environment: dict = {
+            "name": name
+        }
+        asset: Asset = instantiate_class_from_config(
+            config=config,
+            runtime_environment=runtime_environment,
+            config_defaults={
+                "module_name": "great_expectations.execution_environment.data_connector.asset.asset"
+            },
+        )
+        if not asset:
+            raise ge_exceptions.ClassInstantiationError(
+                module_name="great_expectations.execution_environment.data_connector.asset.asset",
+                package_name=None,
+                class_name=config["class_name"],
+            )
+        return asset
+
+    def get_partitioner(self, name: str) -> Partitioner:
+        """Get the (named) Partitioner from a DataConnector)
+
+        Args:
+            name (str): name of Partitioner
+
+        Returns:
+            Partitioner (Partitioner)
+        """
+        if name in self._partitioners_cache:
+            return self._partitioners_cache[name]
+        elif name in self.partitioners:
+            partitioner_config: dict = copy.deepcopy(
+                self.partitioners[name]
+            )
+        else:
+            raise ge_exceptions.PartitionerError(
+                f'Unable to load partitioner "{name}" -- no configuration found or invalid configuration.'
+            )
+        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
+        # partitioner_config: CommentedMap = partitionerConfigSchema.load(
+        #     partitioner_config
+        # )
+        partitioner: Partitioner = self._build_partitioner_from_config(
+            name=name, config=partitioner_config
+        )
+        self._partitioners_cache[name] = partitioner
+        return partitioner
+
+    def _build_partitioner_from_config(self, name: str, config: CommentedMap):
+        """Build a Partitioner using the provided configuration and return the newly-built Partitioner."""
+        # We convert from the type back to a dictionary for purposes of instantiation
+        if isinstance(config, PartitionerConfig):
+            config: dict = partitionerConfigSchema.dump(config)
+        runtime_environment: dict = {
+            "name": name,
+            "data_connector": self
+        }
+        partitioner: Partitioner = instantiate_class_from_config(
+            config=config,
+            runtime_environment=runtime_environment,
+            config_defaults={
+                "module_name": "great_expectations.execution_environment.data_connector.partitioner"
+            },
+        )
+        if not partitioner:
+            raise ge_exceptions.ClassInstantiationError(
+                module_name="great_expectations.execution_environment.data_connector.partitioner",
+                package_name=None,
+                class_name=config["class_name"],
+            )
+        return partitioner
 
     def _get_cached_partitions(
         self,
@@ -229,58 +344,6 @@ multiple partitions, including "{partition}", for the same data reference -- thi
         else:
             if data_asset_name in self._partitions_cache:
                 self._partitions_cache[data_asset_name] = []
-
-    def get_partitioner(self, name: str):
-        """Get the (named) Partitioner from a DataConnector)
-
-        Args:
-            name (str): name of Partitioner
-
-        Returns:
-            Partitioner (Partitioner)
-        """
-        if name in self._partitioners_cache:
-            return self._partitioners_cache[name]
-        elif name in self.partitioners:
-            partitioner_config: dict = copy.deepcopy(
-                self.partitioners[name]
-            )
-        else:
-            raise ge_exceptions.PartitionerError(
-                f'Unable to load partitioner "{name}" -- no configuration found or invalid configuration.'
-            )
-        partitioner_config: CommentedMap = partitionerConfigSchema.load(
-            partitioner_config
-        )
-        partitioner: Partitioner = self._build_partitioner_from_config(
-            name=name, config=partitioner_config
-        )
-        self._partitioners_cache[name] = partitioner
-        return partitioner
-
-    def _build_partitioner_from_config(self, name: str, config: CommentedMap):
-        """Build a Partitioner using the provided configuration and return the newly-built Partitioner."""
-        # We convert from the type back to a dictionary for purposes of instantiation
-        if isinstance(config, PartitionerConfig):
-            config: dict = partitionerConfigSchema.dump(config)
-        runtime_environment: dict = {
-            "name": name,
-            "data_connector": self
-        }
-        partitioner: Partitioner = instantiate_class_from_config(
-            config=config,
-            runtime_environment=runtime_environment,
-            config_defaults={
-                "module_name": "great_expectations.execution_environment.data_connector.partitioner"
-            },
-        )
-        if not partitioner:
-            raise ge_exceptions.ClassInstantiationError(
-                module_name="great_expectations.execution_environment.data_connector.partitioner",
-                package_name=None,
-                class_name=config["class_name"],
-            )
-        return partitioner
 
     def get_partitioner_for_data_asset(self, data_asset_name: str = None) -> Partitioner:
         partitioner_name: str

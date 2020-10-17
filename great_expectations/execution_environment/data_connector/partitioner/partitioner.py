@@ -33,7 +33,6 @@ class Partitioner(object):
         sorters: list = None,
         allow_multipart_partitions: bool = False,
         runtime_keys: list = None,
-        config_params: dict = None,
         **kwargs
     ):
         self._name = name
@@ -41,8 +40,10 @@ class Partitioner(object):
         self._sorters = sorters
         self._allow_multipart_partitions = allow_multipart_partitions
         self._runtime_keys = runtime_keys
-        self._config_params = config_params
         self._sorters_cache = {}
+
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @property
     def name(self) -> str:
@@ -66,12 +67,8 @@ class Partitioner(object):
     def runtime_keys(self) -> list:
         return self._runtime_keys
 
-    @property
-    def config_params(self) -> dict:
-        return self._config_params
-
     def get_sorter(self, name) -> Sorter:
-        """Get the (named) Sorter from a DataConnector)
+        """Get the (named) Sorter from a Partitioner)
 
         Args:
             name (str): name of Sorter
@@ -98,9 +95,10 @@ configuration.
                 raise ge_exceptions.SorterError(
                     f'Unable to load sorter with the name "{name}" -- no configuration found or invalid configuration.'
                 )
-        sorter_config: CommentedMap = sorterConfigSchema.load(
-            sorter_config
-        )
+        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
+        # sorter_config: CommentedMap = sorterConfigSchema.load(
+        #     sorter_config
+        # )
         sorter: Sorter = self._build_sorter_from_config(
             name=name, config=sorter_config
         )

@@ -15,7 +15,6 @@ def test_base_partitioner():
     assert test_partitioner.data_connector == temp_data_connector
     assert test_partitioner.sorters == None
     assert test_partitioner.allow_multipart_partitions == False
-    assert test_partitioner.config_params == None
     # no sorters
     with pytest.raises(ge_exceptions.SorterError):
         test_partitioner.get_sorter("i_dont_exist")
@@ -55,7 +54,10 @@ def test_base_partitioner_with_bad_sorter_config():
     # 2. module_name is bad
     price_sorter_config = [{"orderby": "desc", "module_name": "not_a_real_module", "name": "price"}]
     test_partitioner_with_sorter = Partitioner(name="test_base_partitioner", data_connector=temp_data_connector, sorters=price_sorter_config)
-    with pytest.raises(ValidationError):
+    # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
+    # with pytest.raises(ValidationError):
+    #     test_partitioner_with_sorter.get_sorter("price")
+    with pytest.raises(FileNotFoundError):
         test_partitioner_with_sorter.get_sorter("price")
 
     # 3. orderby : not a real order
