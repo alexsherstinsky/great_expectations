@@ -4,12 +4,7 @@ import copy
 import logging
 from typing import Union, List, Dict, Callable, Any
 
-from great_expectations.data_context.types.base import (
-    DataConnectorConfig,
-    dataConnectorConfigSchema
-)
 from great_expectations.data_context.util import instantiate_class_from_config
-from ruamel.yaml.comments import CommentedMap
 from great_expectations.execution_environment.data_connector.data_connector import DataConnector
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
 from great_expectations.core.id_dict import (
@@ -193,6 +188,7 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
         Returns:
             DataConnector (DataConnector)
         """
+        data_connector_config: dict
         data_connector: DataConnector
         if name in self._data_connectors_cache:
             return self._data_connectors_cache[name]
@@ -200,17 +196,13 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
             "data_connectors" in self._execution_environment_config
             and name in self._execution_environment_config["data_connectors"]
         ):
-            data_connector_config: dict = copy.deepcopy(
+            data_connector_config = copy.deepcopy(
                 self._execution_environment_config["data_connectors"][name]
             )
         else:
             raise ge_exceptions.DataConnectorError(
                 f'Unable to load data connector "{name}" -- no configuration found or invalid configuration.'
             )
-        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
-        # data_connector_config: CommentedMap = dataConnectorConfigSchema.load(
-        #     data_connector_config
-        # )
         data_connector: DataConnector = self._build_data_connector_from_config(
             name=name, config=data_connector_config
         )
@@ -220,12 +212,9 @@ Unable to build batch_spec for data asset "{data_asset_name}" (found {len(partit
     def _build_data_connector_from_config(
         self,
         name: str,
-        config: CommentedMap,
+        config: dict
     ) -> DataConnector:
         """Build a DataConnector using the provided configuration and return the newly-built DataConnector."""
-        # We convert from the type back to a dictionary for purposes of instantiation
-        if isinstance(config, DataConnectorConfig):
-            config: dict = dataConnectorConfigSchema.dump(config)
         module_name: str = "great_expectations.execution_environment.data_connector.data_connector"
         runtime_environment: dict = {
             "name": name,

@@ -45,8 +45,7 @@ class FilesDataConnector(DataConnector):
         known_extensions: List[str] = None,
         reader_options: dict = None,
         reader_method: str = None,
-        data_context_root_directory: str = None,
-        **kwargs
+        data_context_root_directory: str = None
     ):
         logger.debug(f'Constructing FilesDataConnector "{name}".')
         super().__init__(
@@ -54,8 +53,7 @@ class FilesDataConnector(DataConnector):
             partitioners=partitioners,
             default_partitioner=default_partitioner,
             assets=assets,
-            data_context_root_directory=data_context_root_directory,
-            **kwargs
+            data_context_root_directory=data_context_root_directory
         )
 
         self._base_directory = self._normalize_directory_path(dir_path=base_directory)
@@ -159,11 +157,11 @@ class FilesDataConnector(DataConnector):
             and self.assets.get(data_asset_name)
         ):
             asset: Asset = self.get_asset(name=data_asset_name)
-            data_asset_base_directory = getattr(asset, "base_directory")
+            data_asset_base_directory: str = asset.base_directory
             if not data_asset_base_directory:
                 data_asset_base_directory = self.base_directory
             data_asset_base_directory = self._normalize_directory_path(dir_path=data_asset_base_directory)
-            glob_directive: str = getattr(asset, "glob_directive")
+            glob_directive: str = asset.glob_directive
         else:
             data_asset_base_directory = self.base_directory
             glob_directive = self.glob_directive

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Sorter(object):
-    def __init__(self, name: str, orderby: str = "asc", **kwargs):
+    def __init__(self, name: str, orderby: str = "asc"):
         self._name = name
         if orderby is None or orderby == "asc":
             reverse: bool = False
@@ -20,9 +20,6 @@ class Sorter(object):
         else:
             raise ge_exceptions.SorterError(f'Illegal sort order "{orderby}" for attribute "{name}".')
         self._reverse = reverse
-
-        for k, v in kwargs.items():
-            setattr(self, k, v)
 
     def get_sorted_partitions(self, partitions: List[Partition]) -> List[Partition]:
         return sorted(partitions, key=self._verify_sorting_directives_and_get_partition_key, reverse=self.reverse)

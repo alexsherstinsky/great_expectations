@@ -37,18 +37,15 @@ from great_expectations.data_context.templates import (
     PROJECT_TEMPLATE_USAGE_STATISTICS_DISABLED,
     PROJECT_TEMPLATE_USAGE_STATISTICS_ENABLED,
 )
-from ruamel.yaml.comments import CommentedMap
 from great_expectations.data_context.types.base import (  # TODO: deprecate
     CURRENT_CONFIG_VERSION,
     MINIMUM_SUPPORTED_CONFIG_VERSION,
     AnonymizedUsageStatisticsConfig,
     DataContextConfig,
     DatasourceConfig,
-    ExecutionEnvironmentConfig,
     anonymizedUsageStatisticsSchema,
     dataContextConfigSchema,
     datasourceConfigSchema,
-    executionEnvironmentConfigSchema,
 )
 from great_expectations.data_context.types.resource_identifiers import (
     ExpectationSuiteIdentifier,
@@ -1304,37 +1301,15 @@ class BaseDataContext:
         Returns:
             execution_environment (ExecutionEnvironment)
         """
-        logger.debug("Starting BaseDataContext.add_execution_environment for %s" % name)
-        module_name = kwargs.get(
-            "module_name", "great_expectations.execution_environment"
-        )
-        verify_dynamic_loading_support(module_name=module_name)
-        class_name = kwargs.get("class_name")
-        execution_environment_class = load_class(
-            module_name=module_name, class_name=class_name
-        )
+        logger.debug(f'Starting BaseDataContext.add_execution_environment for "{name}".')
 
-        # For any class that should be loaded, it may control its configuration construction
-        # by implementing a classmethod called build_configuration
-        if hasattr(execution_environment_class, "build_configuration"):
-            config = execution_environment_class.build_configuration(**kwargs)
-        else:
-            config = kwargs
+        config: dict = kwargs
 
-        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
-        # config = executionEnvironmentConfigSchema.load(config)
         self._project_config["execution_environments"][name] = config
 
-        # We perform variable substitution in the execution_environment's config here before using the config
-        # to instantiate the execution_environment object. Variable substitution is a service that the data
-        # context provides. ExecutionEnvironments should not see unsubstituted variables in their config.
         if initialize:
             execution_environment = self._build_execution_environment_from_config(
                 name,
-                # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
-                # self._project_config_with_variables_substituted.execution_environments[
-                #     name
-                # ],
                 config
             )
             self._cached_execution_environments[name] = execution_environment
@@ -1365,29 +1340,6 @@ class BaseDataContext:
             name=batch_kwargs_generator_name, class_name=class_name, **kwargs
         )
         return generator
-
-    # TODO: <Alex>Can this be deleted?</Alex>
-    # def add_data_connector(
-    #     self, execution_environment_name, data_connector_name, class_name, **kwargs
-    # ):
-    #     """
-    #     Add a data connector to the named execution_environment, using the provided
-    #     configuration.
-    #
-    #     Args:
-    #         execution_environment_name: name of execution_environment to which to add the new data connector
-    #         data_connector_name: name of the data_connector to add
-    #         class_name: class of the data connector to add
-    #         **kwargs: data connector configuration, provided as kwargs
-    #
-    #     Returns:
-    #
-    #     """
-    #     execution_environment_obj = self.get_execution_environment(execution_environment_name)
-    #     data_connector = execution_environment_obj.add_data_connector(
-    #         name=data_connector_name, class_name=class_name, **kwargs
-    #     )
-    #     return data_connector_name
 
     def get_config(self):
         return self._project_config
@@ -1456,13 +1408,14 @@ class BaseDataContext:
         Returns:
             execution_environment (ExecutionEnvironment)
         """
+        execution_environment_config: dict
         if execution_environment_name in self._cached_execution_environments:
             return self._cached_execution_environments[execution_environment_name]
         if (
             execution_environment_name
             in self._project_config_with_variables_substituted.execution_environments
         ):
-            execution_environment_config: dict = copy.deepcopy(
+            execution_environment_config = copy.deepcopy(
                 self._project_config_with_variables_substituted.execution_environments[
                     execution_environment_name
                 ]
@@ -1473,9 +1426,6 @@ class BaseDataContext:
                 f"invalid "
                 f"configuration."
             )
-        execution_environment_config: CommentedMap = executionEnvironmentConfigSchema.load(
-            execution_environment_config
-        )
         execution_environment: ExecutionEnvironment = self._build_execution_environment_from_config(
             name=execution_environment_name,
             config=execution_environment_config
@@ -1488,11 +1438,8 @@ class BaseDataContext:
     def _build_execution_environment_from_config(
         self,
         name: str,
-        config: CommentedMap
+        config: dict
     ) -> ExecutionEnvironment:
-        # We convert from the type back to a dictionary for purposes of instantiation.
-        if isinstance(config, ExecutionEnvironmentConfig):
-            config: dict = executionEnvironmentConfigSchema.dump(config)
         module_name: str = "great_expectations.execution_environment"
         runtime_environment: dict = {
             "name": name,

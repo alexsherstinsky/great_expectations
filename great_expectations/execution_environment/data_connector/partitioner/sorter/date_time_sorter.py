@@ -12,7 +12,7 @@ import great_expectations.exceptions as ge_exceptions
 logger = logging.getLogger(__name__)
 
 
-def parse_string_to_datetime(datetime_string: str, datetime_format_string: str = "%Y%m%d") -> datetime.date:
+def parse_string_to_datetime(datetime_string: str, datetime_format_string: str) -> datetime.date:
     if not isinstance(datetime_string, str):
         raise ge_exceptions.SorterError(
             f'''Source "datetime_string" must have string type (actual type is "{str(type(datetime_string))}").
@@ -32,10 +32,10 @@ def datetime_to_int(dt: datetime.date) -> int:
 
 
 class DateTimeSorter(Sorter):
-    def __init__(self, name: str, orderby: str = "asc", **kwargs):
-        super().__init__(name=name, orderby=orderby, **kwargs)
+    def __init__(self, name: str, orderby: str = "asc", datetime_format="%Y%m%d"):
+        super().__init__(name=name, orderby=orderby)
 
-        self._datetime_format = getattr(self, "datetime_format")
+        self._datetime_format = datetime_format
 
     def get_partition_key(self, partition: Partition) -> Any:
         partition_definition: dict = partition.definition

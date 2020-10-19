@@ -87,7 +87,8 @@ def test_sorter_instantiation_custom_list_with_periodic_table(periodic_table_of_
         'reference_list': periodic_table_of_elements,
     }
     my_custom = CustomListSorter(name="element", orderby="asc", **sorter_params)
-    assert getattr(my_custom, "reference_list") == periodic_table_of_elements
+    # noinspection PyProtectedMember
+    assert my_custom._reference_list == periodic_table_of_elements
     # This element exists : Hydrogen
     test_partition = Partition(
         name="test",

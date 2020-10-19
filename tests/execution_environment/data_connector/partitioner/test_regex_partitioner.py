@@ -18,7 +18,8 @@ def test_regex_partitioner_instantiation():
     assert partitioner.sorters is None
     assert not partitioner.allow_multipart_partitions
     # without regex configured, you will get a default pattern
-    assert partitioner.regex == {"pattern": r"(.*)", "group_names": ["group_0"]}
+    # noinspection PyProtectedMember
+    assert partitioner._regex == {"pattern": r"(.*)", "group_names": ["group_0"]}
 
 
 def test_regex_partitioner_regex_is_not_a_dict():
@@ -26,7 +27,7 @@ def test_regex_partitioner_regex_is_not_a_dict():
     regex = "i_am_not_a_dictionary"
 
     with pytest.raises(ge_exceptions.PartitionerError):
-        # noinspection PyUnusedLocal
+        # noinspection PyUnusedLocal,PyTypeChecker
         partitioner = RegexPartitioner(
             name="test_regex_partitioner",
             data_connector=data_connector,
@@ -51,7 +52,8 @@ def test_regex_partitioner_regex_no_groups_named():
         data_connector=data_connector,
         regex=regex
     )
-    assert regex_partitioner.regex == {"pattern": r".+\/(.+)_(.+)_(.+)\.csv", "group_names": []}
+    # noinspection PyProtectedMember
+    assert regex_partitioner._regex == {"pattern": r".+\/(.+)_(.+)_(.+)\.csv", "group_names": []}
 
 
 def test_regex_partitioner_regex_groups_named():
@@ -63,7 +65,8 @@ def test_regex_partitioner_regex_groups_named():
         data_connector=data_connector,
         regex=regex
     )
-    assert regex_partitioner.regex == {
+    # noinspection PyProtectedMember
+    assert regex_partitioner._regex == {
         "pattern": r".+\/(.+)_(.+)_(.+)\.csv",
         "group_names": ["name", "timestamp", "price"]
     }

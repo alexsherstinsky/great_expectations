@@ -16,9 +16,9 @@ class CustomListSorter(Sorter):
     CustomListSorter
         - The CustomListSorter is able to sort partitions values according to a user-provided custom list.
     """
-    def __init__(self, name: str, orderby: str = "asc", **kwargs):
-        super().__init__(name=name, orderby=orderby, **kwargs)
-        self._reference_list: list = getattr(self, "reference_list")
+    def __init__(self, name: str, orderby: str = "asc", reference_list: List[str] = None):
+        super().__init__(name=name, orderby=orderby)
+
         self._reference_list = self._validate_reference_list(reference_list=reference_list)
 
     @staticmethod

@@ -24,7 +24,7 @@ class RegexPartitioner(Partitioner):
         sorters: list = None,
         allow_multipart_partitions: bool = False,
         runtime_keys: list = None,
-        **kwargs
+        regex: dict = None
     ):
         logger.debug(f'Constructing RegexPartitioner "{name}".')
         super().__init__(
@@ -32,16 +32,10 @@ class RegexPartitioner(Partitioner):
             data_connector=data_connector,
             sorters=sorters,
             allow_multipart_partitions=allow_multipart_partitions,
-            runtime_keys=runtime_keys,
-            **kwargs
+            runtime_keys=runtime_keys
         )
 
-        regex_config: Union[dict, None]
-        try:
-            regex_config = getattr(self, "regex")
-        except AttributeError:
-            regex_config = None
-        self.regex = self._process_regex_config(regex_config=regex_config)
+        self._regex = self._process_regex_config(regex_config=regex)
 
     def _process_regex_config(self, regex_config: dict) -> dict:
         regex: Union[dict, None]
@@ -110,7 +104,7 @@ currently of type "{type(regex_config)}. Please check your configuration.
         data_asset_name: str = None,
         runtime_parameters: Union[dict, None] = None
     ) -> Union[Partition, None]:
-        matches: Union[re.Match, None] = re.match(self.regex["pattern"], path)
+        matches: Union[re.Match, None] = re.match(self._regex["pattern"], path)
         if matches is None:
             logger.warning(f'No match found for path: "{path}".')
             return None
@@ -120,10 +114,10 @@ currently of type "{type(regex_config)}. Please check your configuration.
                 f"{RegexPartitioner.DEFAULT_GROUP_NAME_PATTERN}{idx}" for idx, group_value in enumerate(groups)
             ]
             self._validate_sorters_configuration(
-                partition_keys=self.regex["group_names"],
+                partition_keys=self._regex["group_names"],
                 num_actual_partition_keys=len(groups)
             )
-            for idx, group_name in enumerate(self.regex["group_names"]):
+            for idx, group_name in enumerate(self._regex["group_names"]):
                 group_names[idx] = group_name
             partition_definition: dict = {}
             for idx, group_value in enumerate(groups):

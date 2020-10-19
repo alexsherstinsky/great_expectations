@@ -3,16 +3,9 @@
 import copy
 import itertools
 from typing import List, Dict, Union, Callable, Any
-from ruamel.yaml.comments import CommentedMap
 
 import logging
 
-from great_expectations.data_context.types.base import (
-    AssetConfig,
-    assetConfigSchema,
-    PartitionerConfig,
-    partitionerConfigSchema
-)
 from great_expectations.execution_environment.data_connector.asset.asset import Asset
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
@@ -63,8 +56,7 @@ class DataConnector(object):
         assets: dict = None,
         partitioners: dict = None,
         default_partitioner: str = None,
-        data_context_root_directory: str = None,
-        **kwargs
+        data_context_root_directory: str = None
     ):
         self._name = name
         if assets is None:
@@ -108,12 +100,13 @@ class DataConnector(object):
         Returns:
             Asset (Asset)
         """
+        asset_config: dict
         if name in self._assets_cache:
             return self._assets_cache[name]
         else:
             if self._assets:
                 if name in self._assets.keys():
-                    asset_config: dict = copy.deepcopy(
+                    asset_config = copy.deepcopy(
                         self._assets[name]
                     )
                 else:
@@ -126,10 +119,6 @@ configuration.
                 raise ge_exceptions.AssetError(
                     f'Unable to load asset with the name "{name}" -- no configuration found or invalid configuration.'
                 )
-        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
-        # asset_config: CommentedMap = assetConfigSchema.load(
-        #     asset_config
-        # )
         asset: Asset = self._build_asset_from_config(
             name=name, config=asset_config
         )
@@ -137,11 +126,8 @@ configuration.
         return asset
 
     @staticmethod
-    def _build_asset_from_config(name: str, config: CommentedMap) -> Asset:
+    def _build_asset_from_config(name: str, config: dict) -> Asset:
         """Build an Asset using the provided configuration and return the newly-built Asset."""
-        # We convert from the type back to a dictionary for purposes of instantiation
-        if isinstance(config, AssetConfig):
-            config: dict = assetConfigSchema.dump(config)
         runtime_environment: dict = {
             "name": name
         }
@@ -169,31 +155,25 @@ configuration.
         Returns:
             Partitioner (Partitioner)
         """
+        partitioner_config: dict
         if name in self._partitioners_cache:
             return self._partitioners_cache[name]
         elif name in self.partitioners:
-            partitioner_config: dict = copy.deepcopy(
+            partitioner_config = copy.deepcopy(
                 self.partitioners[name]
             )
         else:
             raise ge_exceptions.PartitionerError(
                 f'Unable to load partitioner "{name}" -- no configuration found or invalid configuration.'
             )
-        # TODO: <Alex>We must figure out how to enable schema validation.</Alex>
-        # partitioner_config: CommentedMap = partitionerConfigSchema.load(
-        #     partitioner_config
-        # )
         partitioner: Partitioner = self._build_partitioner_from_config(
             name=name, config=partitioner_config
         )
         self._partitioners_cache[name] = partitioner
         return partitioner
 
-    def _build_partitioner_from_config(self, name: str, config: CommentedMap):
+    def _build_partitioner_from_config(self, name: str, config: dict):
         """Build a Partitioner using the provided configuration and return the newly-built Partitioner."""
-        # We convert from the type back to a dictionary for purposes of instantiation
-        if isinstance(config, PartitionerConfig):
-            config: dict = partitionerConfigSchema.dump(config)
         runtime_environment: dict = {
             "name": name,
             "data_connector": self

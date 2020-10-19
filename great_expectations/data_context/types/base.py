@@ -242,38 +242,24 @@ class DataConnectorConfigSchema(Schema):
     class_name = fields.String(required=True)
     module_name = fields.String(missing="great_expectations.execution_environment.data_connector")
 
-    default_partitioner = fields.String(
-        required=False,
-        allow_none=True,
-    )
-
-    # TODO: <Alex></Alex>
-    partitioners = fields.Dict(
-        keys=fields.Str(),
-        values=fields.Nested(PartitionerConfigSchema),
-        required=False,
-        allow_none=True,
-    )
-    # partitioners = fields.Dict(
-    #     keys=fields.Str(),
-    #     values=fields.Dict(),
-    #     required=False,
-    #     allow_none=True,
-    # )
-
-    # TODO: <Alex></Alex>
     assets = fields.Dict(
         keys=fields.Str(),
         values=fields.Nested(AssetConfigSchema),
         required=False,
         allow_none=True,
     )
-    # assets = fields.Dict(
-    #     keys=fields.Str(),
-    #     values=fields.Dict(),
-    #     required=False,
-    #     allow_none=True,
-    # )
+
+    partitioners = fields.Dict(
+        keys=fields.Str(),
+        values=fields.Nested(PartitionerConfigSchema),
+        required=False,
+        allow_none=True,
+    )
+
+    default_partitioner = fields.String(
+        required=False,
+        allow_none=True,
+    )
 
     @validates_schema
     def validate_schema(self, data, **kwargs):
@@ -400,43 +386,6 @@ class ExecutionEnvironmentConfigSchema(Schema):
         return ExecutionEnvironmentConfig(**data)
 
 
-# TODO: deprecate? keep for backwards compatibility?
-class DatasourceConfig(DictDot):
-    def __init__(
-        self,
-        class_name,
-        module_name=None,
-        data_asset_type=None,
-        batch_kwargs_generators=None,
-        credentials=None,
-        reader_method=None,
-        limit=None,
-        **kwargs
-    ):
-        # NOTE - JPC - 20200316: Currently, we are mostly inconsistent with respect to this type...
-        self._class_name = class_name
-        self._module_name = module_name
-        self.data_asset_type = data_asset_type
-        if batch_kwargs_generators is not None:
-            self.batch_kwargs_generators = batch_kwargs_generators
-        if credentials is not None:
-            self.credentials = credentials
-        if reader_method is not None:
-            self.reader_method = reader_method
-        if limit is not None:
-            self.limit = limit
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    @property
-    def class_name(self):
-        return self._class_name
-
-    @property
-    def module_name(self):
-        return self._module_name
-
-
 class AnonymizedUsageStatisticsConfig(DictDot):
     def __init__(self, enabled=True, data_context_id=None, usage_statistics_url=None):
         self._enabled = enabled
@@ -514,6 +463,43 @@ class AnonymizedUsageStatisticsConfigSchema(Schema):
         if "_explicit_url" in data:
             del data["_explicit_url"]
         return data
+
+
+# TODO: deprecate? keep for backwards compatibility?
+class DatasourceConfig(DictDot):
+    def __init__(
+        self,
+        class_name,
+        module_name=None,
+        data_asset_type=None,
+        batch_kwargs_generators=None,
+        credentials=None,
+        reader_method=None,
+        limit=None,
+        **kwargs
+    ):
+        # NOTE - JPC - 20200316: Currently, we are mostly inconsistent with respect to this type...
+        self._class_name = class_name
+        self._module_name = module_name
+        self.data_asset_type = data_asset_type
+        if batch_kwargs_generators is not None:
+            self.batch_kwargs_generators = batch_kwargs_generators
+        if credentials is not None:
+            self.credentials = credentials
+        if reader_method is not None:
+            self.reader_method = reader_method
+        if limit is not None:
+            self.limit = limit
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    @property
+    def class_name(self):
+        return self._class_name
+
+    @property
+    def module_name(self):
+        return self._module_name
 
 
 class DatasourceConfigSchema(Schema):
