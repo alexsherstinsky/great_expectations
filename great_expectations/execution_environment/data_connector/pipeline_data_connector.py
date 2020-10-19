@@ -25,7 +25,6 @@ class PipelineDataConnector(DataConnector):
         partitioners: dict = None,
         default_partitioner: str = None,
         assets: dict = None,
-        config_params: dict = None,
         data_context_root_directory: str = None,
         **kwargs
     ):
@@ -35,7 +34,6 @@ class PipelineDataConnector(DataConnector):
             partitioners=partitioners,
             default_partitioner=default_partitioner,
             assets=assets,
-            config_params=config_params,
             data_context_root_directory=data_context_root_directory,
             **kwargs
         )

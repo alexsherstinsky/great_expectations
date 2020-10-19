@@ -2,14 +2,9 @@
 
 import copy
 from typing import Union, List, Iterator
-from ruamel.yaml.comments import CommentedMap
 
 import logging
 
-from great_expectations.data_context.types.base import (
-    SorterConfig,
-    sorterConfigSchema
-)
 from great_expectations.core.id_dict import PartitionDefinitionSubset
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import PartitionQuery
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
@@ -32,16 +27,13 @@ class Partitioner(object):
         data_connector,
         sorters: list = None,
         allow_multipart_partitions: bool = False,
-        runtime_keys: list = None,
-        config_params: dict = None,
-        **kwargs
+        runtime_keys: list = None
     ):
         self._name = name
         self._data_connector = data_connector
         self._sorters = sorters
         self._allow_multipart_partitions = allow_multipart_partitions
         self._runtime_keys = runtime_keys
-        self._config_params = config_params
         self._sorters_cache = {}
 
     @property
@@ -66,12 +58,8 @@ class Partitioner(object):
     def runtime_keys(self) -> list:
         return self._runtime_keys
 
-    @property
-    def config_params(self) -> dict:
-        return self._config_params
-
     def get_sorter(self, name) -> Sorter:
-        """Get the (named) Sorter from a DataConnector)
+        """Get the (named) Sorter from a Partitioner)
 
         Args:
             name (str): name of Sorter
@@ -79,13 +67,14 @@ class Partitioner(object):
         Returns:
             Sorter (Sorter)
         """
+        sorter_config: dict
         if name in self._sorters_cache:
             return self._sorters_cache[name]
         else:
             if self._sorters:
                 sorter_names: list = [sorter_config["name"] for sorter_config in self._sorters]
                 if name in sorter_names:
-                    sorter_config: dict = copy.deepcopy(
+                    sorter_config = copy.deepcopy(
                         self._sorters[sorter_names.index(name)]
                     )
                 else:
@@ -98,9 +87,6 @@ configuration.
                 raise ge_exceptions.SorterError(
                     f'Unable to load sorter with the name "{name}" -- no configuration found or invalid configuration.'
                 )
-        sorter_config: CommentedMap = sorterConfigSchema.load(
-            sorter_config
-        )
         sorter: Sorter = self._build_sorter_from_config(
             name=name, config=sorter_config
         )
@@ -108,11 +94,9 @@ configuration.
         return sorter
 
     @staticmethod
-    def _build_sorter_from_config(name: str, config: CommentedMap) -> Sorter:
+    # def _build_sorter_from_config(name: str, config: CommentedMap) -> Sorter:
+    def _build_sorter_from_config(name: str, config: dict) -> Sorter:
         """Build a Sorter using the provided configuration and return the newly-built Sorter."""
-        # We convert from the type back to a dictionary for purposes of instantiation
-        if isinstance(config, SorterConfig):
-            config: dict = sorterConfigSchema.dump(config)
         runtime_environment: dict = {
             "name": name
         }

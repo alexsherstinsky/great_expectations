@@ -17,9 +17,7 @@ class PipelinePartitioner(Partitioner):
         data_connector,
         sorters: list = None,
         allow_multipart_partitions: bool = False,
-        runtime_keys: list = None,
-        config_params: dict = None,
-        **kwargs
+        runtime_keys: list = None
     ):
         logger.debug(f'Constructing PipelinePartitioner "{name}".')
         super().__init__(
@@ -27,9 +25,7 @@ class PipelinePartitioner(Partitioner):
             data_connector=data_connector,
             sorters=sorters,
             allow_multipart_partitions=allow_multipart_partitions,
-            runtime_keys=runtime_keys,
-            config_params=config_params,
-            **kwargs
+            runtime_keys=runtime_keys
         )
 
     def _compute_partitions_for_data_asset(
