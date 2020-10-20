@@ -91,13 +91,13 @@ def test_return_all_available_partitions_unsorted(
             definition=PartitionDefinition({"group_0": "will", "group_1": "20200809", "group_2": "1002"}),
             data_reference=f"{base_directory}/will_20200809_1002.csv"
         ),
-         Partition(
+        Partition(
              name="james-20200811-1009",
              data_asset_name="james_20200811_1009",
              definition=PartitionDefinition({"group_0": "james", "group_1": "20200811", "group_2": "1009"}),
              data_reference=f"{base_directory}/james_20200811_1009.csv"
          ),
-         Partition(
+        Partition(
              name="james-20200713-1567",
              data_asset_name="james_20200713_1567",
              definition=PartitionDefinition({"group_0": "james", "group_1": "20200713", "group_2": "1567"}),

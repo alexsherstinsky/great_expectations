@@ -2,7 +2,6 @@ from typing import Union, List, Any
 
 import logging
 
-from great_expectations.execution_engine import ExecutionEngine
 from great_expectations.execution_environment.data_connector.partitioner.partitioner import Partitioner
 from great_expectations.execution_environment.data_connector.partitioner.partition_query import PartitionQuery
 from great_expectations.execution_environment.data_connector.partitioner.partition import Partition
@@ -26,9 +25,7 @@ class PipelineDataConnector(DataConnector):
         partitioners: dict = None,
         default_partitioner: str = None,
         assets: dict = None,
-        config_params: dict = None,
-        execution_engine: ExecutionEngine = None,
-        data_context_root_directory:str = None,
+        data_context_root_directory: str = None,
         **kwargs
     ):
         logger.debug(f'Constructing PipelineDataConnector "{name}".')
@@ -37,8 +34,6 @@ class PipelineDataConnector(DataConnector):
             partitioners=partitioners,
             default_partitioner=default_partitioner,
             assets=assets,
-            config_params=config_params,
-            execution_engine=execution_engine,
             data_context_root_directory=data_context_root_directory,
             **kwargs
         )

@@ -102,12 +102,11 @@ data_connectors:
         partitioners:
             my_regex_partitioner:
                 class_name: RegexPartitioner
-                config_params:
-                    regex:
-                        group_names:
-                            - letter
-                            - number
-                        pattern: {temp_dir}/(.+)(\d+)\.csv
+                regex:
+                    group_names:
+                        - letter
+                        - number
+                    pattern: {temp_dir}/(.+)(\d+)\.csv
 """, return_mode="return_object"
     )
 

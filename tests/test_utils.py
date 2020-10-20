@@ -1605,8 +1605,8 @@ def safe_remove(path):
 def execution_environment_files_data_connector_regex_partitioner_config(
     use_group_names: bool = False,
     use_sorters: bool = False,
-    default_base_directory = "data",
-    data_asset_base_directory = None,
+    default_base_directory: str = "data",
+    data_asset_base_directory: str = None,
 ):
     if not use_group_names and use_sorters:
         raise ValueError("The presently available data_connector and partitioner tests match sorters with group names.")
@@ -1635,9 +1635,7 @@ def execution_environment_files_data_connector_regex_partitioner_config(
                 "module_name": "great_expectations.execution_environment.data_connector.partitioner.sorter",
                 "class_name": "DateTimeSorter",
                 "orderby": "desc",
-                "config_params": {
-                    "datetime_format": "%Y%m%d",
-                }
+                "datetime_format": "%Y%m%d",
             },
             {
                 "name": "price",
@@ -1668,14 +1666,16 @@ def execution_environment_files_data_connector_regex_partitioner_config(
                             "class_name": "PipelinePartitioner",
                             "allow_multipart_partitions": False,
                             "runtime_keys": [
-                                "custom_key_0",
                                 "run_id",
+                                "custom_key_0",
                             ]
                         }
                     },
                     "default_partitioner": "test_pipeline_partitioner",
                     "assets": {
                         "test_asset_1": {
+                            "module_name": "great_expectations.execution_environment.data_connector.asset",
+                            "class_name": "Asset",
                             "partitioner": "test_pipeline_partitioner"
                         }
                     }
@@ -1689,26 +1689,28 @@ def execution_environment_files_data_connector_regex_partitioner_config(
                         "test_regex_partitioner": {
                             "module_name": "great_expectations.execution_environment.data_connector.partitioner",
                             "class_name": "RegexPartitioner",
-                            "config_params": {
-                                "regex": {
-                                    "pattern": r"(.+)_(.+)_(.+)\.csv",
-                                    "group_names": group_names
-                                },
+                            "regex": {
+                                # TODO: <Alex>Important: RegEx pattern depends on whether or not the full path or just the file names are obtained by FilesDataConnector.</Alex>
+                                # "pattern": r".+\/(.+)_(.+)_(.+)\.csv",
+                                "pattern": r"(.+)_(.+)_(.+)\.csv",
+                                "group_names": group_names
                             },
                             "allow_multipart_partitions": False,
                             "sorters": sorters,
                             "runtime_keys": [
-                                "custom_key_0",
                                 "run_id",
+                                "custom_key_0",
                             ]
                         }
                     },
                     "default_partitioner": "test_regex_partitioner",
                     "assets": {
                         "test_asset_0": {
+                            "module_name": "great_expectations.execution_environment.data_connector.asset",
+                            "class_name": "Asset",
                             "partitioner": "test_regex_partitioner",
-                                "base_directory": data_asset_base_directory,
-                                "glob_directive": "alex*",
+                            "base_directory": data_asset_base_directory,
+                            "glob_directive": "alex*",
                         }
                     }
                 }

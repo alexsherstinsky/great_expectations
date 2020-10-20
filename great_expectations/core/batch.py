@@ -124,6 +124,7 @@ is illegal.
             indent=2
         )
 
+
 class BatchDefinition(DictDot):
     def __init__(
         self,
