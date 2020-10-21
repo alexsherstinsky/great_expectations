@@ -75,6 +75,7 @@ class DataConnector(object):
         self._execution_engine = execution_engine
         self._data_context_root_directory = data_context_root_directory
 
+        # TODO: <Alex>Drop this cache.</Alex>
         self._assets_cache: dict = {}
 
         self._partitioners_cache: dict = {}
@@ -109,6 +110,7 @@ class DataConnector(object):
         # except KeyError:
         #     raise ValueError("No default partitioner has been set")
 
+    # TODO: <Alex>Eliminate the old pattern of object caches.</Alex>
     def get_asset(self, name) -> Asset:
         """Get the (named) Asset from a DataConnector)
 
@@ -169,6 +171,7 @@ configuration.
             # noinspection PyUnusedLocal
             new_partitioner: Partitioner = self.get_partitioner(name=name)
 
+    # TODO: <Alex>Please do not re-introduce this method. Find another way to get the tests to pass.</Alex>
     def get_partitioner(self, name: str) -> Partitioner:
         """Get the (named) Partitioner from a DataConnector)
 

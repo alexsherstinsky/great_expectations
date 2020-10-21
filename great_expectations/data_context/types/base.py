@@ -315,7 +315,7 @@ class ExecutionEngineConfigSchema(Schema):
     def validate_schema(self, data, **kwargs):
         pass
 
-    # # noinspection PyUnusedLocal
+    # noinspection PyUnusedLocal
     @post_load
     def make_execution_engine_config(self, data, **kwargs):
         return ExecutionEngineConfig(**data)
@@ -465,7 +465,6 @@ class AnonymizedUsageStatisticsConfigSchema(Schema):
         return data
 
 
-# TODO: deprecate? keep for backwards compatibility?
 class DatasourceConfig(DictDot):
     def __init__(
         self,
